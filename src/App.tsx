@@ -314,7 +314,7 @@ function App() {
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className="nav-item active"><Grid2X2 size={19} /><span>Collection</span></button>
         <button className="nav-item" onClick={() => document.getElementById('market-board-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><ChartNoAxesCombined size={19} /><span>Market</span></button>
-        <button className="nav-item" onClick={() => document.querySelector('.wallet-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })><Wallet size={19} /><span>Wallet</span></button>
+        <button className="nav-item" onClick={() => document.querySelector('.wallet-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}><Wallet size={19} /><span>Wallet</span></button>
         <button className="nav-item" onClick={() => setShowAbout(true)}><Settings2 size={19} /><span>Settings</span></button>
       </nav>
 
