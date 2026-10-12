@@ -21,14 +21,36 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 ## Current status
 
 - React + TypeScript Mini App interface is in place.
-- `POST /api/auth` validates Telegram Mini App initialization data server-side using the bot token, checks expiry, and returns a minimal verified user profile.
+- Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
+- Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
 - MTProto username discovery and TON wallet connection are not implemented yet.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
 
-### Required environment
+## Secrets and deployment
 
-Configure `TELEGRAM_BOT_TOKEN` as a server-side environment variable in the deployment platform before expecting Telegram identity verification to succeed. Never expose this token to frontend code or commit it to the repository. Without the variable, the auth endpoint intentionally returns a configuration error.
+**Never commit the Telegram bot token. Never put it in frontend code, a `VITE_*` variable, an issue, or a log.** The token shared during development should be rotated before production.
+
+### Supabase Edge Function
+
+Function source: `supabase/functions/telegram-auth/index.ts`
+
+1. Link the Supabase CLI to the intended TTOGRM project.
+2. Set the token interactively or through a secure local environment, never by committing it:
+   ```bash
+   supabase secrets set TELEGRAM_BOT_TOKEN
+   ```
+   Follow the CLI prompt for the value if offered by your installed version; otherwise use the Supabase dashboard's Edge Function secrets UI. Do not paste the secret into shell history or CI logs.
+3. Deploy the function:
+   ```bash
+   supabase functions deploy telegram-auth --no-verify-jwt
+   ```
+   JWT verification is disabled at the gateway only because this endpoint performs its own Telegram signed-`initData` verification. The function must reject requests without valid signed data.
+4. Set the frontend auth endpoint to `https://YOUR_PROJECT_REF.supabase.co/functions/v1/telegram-auth` in the app deployment environment, if using the Supabase function. The endpoint URL is not a secret.
+
+### Vercel API route fallback
+
+Configure `TELEGRAM_BOT_TOKEN` as a server-side environment variable in Vercel. The existing `POST /api/auth` endpoint reads it from `process.env`. Never use a `VITE_TELEGRAM_BOT_TOKEN` variable.
 
 ## Development
 
@@ -42,8 +64,8 @@ npm run dev
 ## Planned architecture
 
 - **Frontend:** React + TypeScript + Vite, designed to run inside Telegram.
-- **Telegram identity:** validate Telegram Mini App `initData` on a trusted server before treating the Telegram user ID as authenticated.
-- **Username discovery:** investigate a secure, explicit MTProto authorization service and document the visibility limitations.
+- **Telegram identity:** validate signed Telegram Mini App `initData` on a trusted server before treating the Telegram user ID as authenticated.
+- **Username discovery:** investigate a secure, explicit MTProto authorization service and document visibility limitations.
 - **TON:** optional TON Connect integration, used only to identify assets held by the connected wallet. A wallet address alone does not prove that every Telegram username belongs to that user.
 - **Security:** secrets stay server-side; never trust `initDataUnsafe`; validate signed Mini App initialization data on the server.
 
@@ -52,3 +74,4 @@ npm run dev
 - [Telegram Mini Apps](https://core.telegram.org/bots/webapps)
 - [Telegram Mini App init data validation](https://docs.telegram-mini-apps.com/platform/init-data)
 - [TON Connect overview](https://docs.ton.org/applications/ton-connect/overview)
+- [Supabase Edge Function secrets](https://supabase.com/docs/guides/functions/secrets)
