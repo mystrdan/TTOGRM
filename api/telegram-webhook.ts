@@ -20,7 +20,7 @@ const HELP = [
   '/top — Highest reported username sale',
   '/stats — Market data coverage and status',
   '',
-  'Sales figures will only be shown when a trusted data source is connected. TTOGRM does not invent market numbers.',
+  'Market prices are shown in Gram (GRAM), TON's native currency. Sales figures will only be shown when a trusted data source is connected. TTOGRM does not invent market numbers.',
 ].join('\n')
 
 const DATA_PENDING = 'The TTOGRM sales data feed is not connected yet, so verified market figures are currently unavailable. We will not guess sales counts or prices.'
@@ -36,8 +36,8 @@ function commandOf(text: string) {
   return first.split('@', 1)[0].toLowerCase()
 }
 
-function formatTon(value: number | null) {
-  return value === null ? 'Price undisclosed' : `${value.toLocaleString(undefined, { maximumFractionDigits: 3 })} TON`
+function formatGram(value: number | null) {
+  return value === null ? 'Price undisclosed' : `${value.toLocaleString(undefined, { maximumFractionDigits: 3 })} GRAM`
 }
 
 function responseFor(command: string, firstName = '', board?: MarketBoard) {
@@ -48,16 +48,16 @@ function responseFor(command: string, firstName = '', board?: MarketBoard) {
       return HELP
     case '/board': {
       if (!board?.available) return `📊 TTOGRM Market Info Board\n\nSales in 24h: —\nSales volume: —\nTop sale: —\n\n${DATA_PENDING}`
-      const top = board.topSale ? `@${board.topSale.username} · ${formatTon(board.topSale.sale_price_ton === null ? null : Number(board.topSale.sale_price_ton))}` : 'No verified sale with a disclosed price'
-      return `📊 TTOGRM Market Info Board · rolling 24h\n\n• Verified sales: ${board.soldCount}\n• Known-price volume: ${formatTon(board.volumeTon)}\n• Top sale: ${top}\n• Latest records loaded: ${board.recentSales.length}${board.updatedAt ? `\n• Latest sale time: ${board.updatedAt}` : ''}\n\nOnly verified ingested records are counted.`
+      const top = board.topSale ? `@${board.topSale.username} · ${formatGram(board.topSale.sale_price_gram === null ? null : Number(board.topSale.sale_price_gram))}` : 'No verified sale with a disclosed price'
+      return `📊 TTOGRM Market Info Board · rolling 24h\n\n• Verified sales: ${board.soldCount}\n• Known-price volume: ${formatGram(board.volumeGram)}\n• Top sale: ${top}\n• Latest records loaded: ${board.recentSales.length}${board.updatedAt ? `\n• Latest sale time: ${board.updatedAt}` : ''}\n\nOnly verified ingested records are counted.`
     }
     case '/sales':
       if (!board?.available) return `🧾 Username sales · last 24 hours\n\nSold: —\nReported volume: —\n\n${DATA_PENDING}`
-      return `🧾 Username sales · rolling 24 hours\n\nVerified sales: ${board.soldCount}\nKnown-price volume: ${formatTon(board.volumeTon)}\n\nOnly verified ingested records are counted.`
+      return `🧾 Username sales · rolling 24 hours\n\nVerified sales: ${board.soldCount}\nKnown-price volume: ${formatGram(board.volumeGram)}\n\nOnly verified ingested records are counted.`
     case '/top': {
       if (!board?.available) return `🏆 Top username sale · last 24 hours\n\nUsername: —\nSale price: —\n\n${DATA_PENDING}`
       if (!board.topSale) return '🏆 No verified username sale with a disclosed price is recorded in the current 24-hour window.'
-      return `🏆 Top username sale · rolling 24 hours\n\nUsername: @${board.topSale.username}\nSale price: ${formatTon(board.topSale.sale_price_ton === null ? null : Number(board.topSale.sale_price_ton))}\nSale time: ${board.topSale.sold_at}${board.topSale.source_url ? `\nSource: ${board.topSale.source_url}` : ''}`
+      return `🏆 Top username sale · rolling 24 hours\n\nUsername: @${board.topSale.username}\nSale price: ${formatGram(board.topSale.sale_price_gram === null ? null : Number(board.topSale.sale_price_gram))}\nSale time: ${board.topSale.sold_at}${board.topSale.source_url ? `\nSource: ${board.topSale.source_url}` : ''}`
     }
     case '/stats':
       return `TTOGRM service status\n\n• Bot command endpoint: active\n• Market data source: ${board?.available ? 'connected' : 'not connected'}\n• Verified sales in current 24h window: ${board?.available ? board.soldCount : 'unavailable'}\n\nA zero count means no verified records are loaded in the current window; it does not prove that no usernames were sold.`
