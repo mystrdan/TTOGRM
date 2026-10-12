@@ -233,25 +233,40 @@ function App() {
         </a>
         <div className="top-actions">
           <button className="icon-button subtle-button" aria-label="About TTOGRM" onClick={() => setShowAbout(true)}><CircleHelp size={19} /></button>
-          <button className="avatar-button" aria-label="Open profile" onClick={() => setShowAbout(true)}>
-            {verifiedUser?.photo_url ? <img src={verifiedUser.photo_url} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
-          </button>
+          {verifiedUser
+            ? <button className="avatar-button" aria-label="Open profile settings" onClick={() => navigateTo('settings')}>
+                {verifiedUser.photo_url ? <img src={verifiedUser.photo_url} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
+              </button>
+            : <button className="header-signin" onClick={() => navigateTo('collection')}>Sign in <ArrowUpRight size={14} /></button>}
         </div>
       </header>
 
       {activePage === 'collection' && <>
       <section className="welcome" id="home">
-        <div className="eyebrow"><span className="status-dot" /> YOUR TELEGRAM COLLECTION</div>
-        <h1>Every name.<br /><span>One place.</span></h1>
-        <p className="welcome-copy">Your usernames across profiles, groups and channels — gathered into one private collection.</p>
-        <div className="profile-chip">
-          <span className="profile-avatar">{displayName.slice(0, 1).toUpperCase()}</span>
-          <span className="profile-copy"><strong>{displayName}</strong><small>{username}</small></span>
-          <span className={authState === 'verified' ? 'connection-pill connected' : 'connection-pill'}><span />{authState === 'verified' ? 'Identity verified' : authState === 'checking' ? 'Verifying Telegram' : authState === 'failed' ? 'Verification failed' : 'Preview mode'}</span>
-        </div>
+        {verifiedUser ? <>
+          <div className="eyebrow"><span className="status-dot" /> PERSONAL DASHBOARD</div>
+          <h1>Welcome back,<br /><span>{displayName}.</span></h1>
+          <p className="welcome-copy">Your username workspace. Review your collection, track verified market activity, and manage your connected wallet.</p>
+          <div className="profile-chip">
+            <span className="profile-avatar">{displayName.slice(0, 1).toUpperCase()}</span>
+            <span className="profile-copy"><strong>{displayName}</strong><small>{username}</small></span>
+            <span className="connection-pill connected"><span />Identity verified</span>
+          </div>
+        </> : <>
+          <div className="eyebrow"><span className="status-dot" /> TELEGRAM USERNAME WORKSPACE</div>
+          <h1>Every name.<br /><span>One place.</span></h1>
+          <p className="welcome-copy">A private workspace for your Telegram usernames — from personal profiles to groups, channels, and collectibles. Sign in to open your dashboard.</p>
+          <div className="public-benefits">
+            <span><ShieldCheck size={15} /> Private workspace</span>
+            <span><Gem size={15} /> Collectibles &amp; basic names</span>
+            <span><ChartNoAxesCombined size={15} /> Verified market signals</span>
+          </div>
+          {initData && authState === 'checking' && <p className="auth-pending">Verifying your Telegram identity…</p>}
+          {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please reopen the Mini App or try signing in again.</p>}
+        </>}
       </section>
 
-      {!initData && <section className="browser-auth-card" aria-label="Telegram browser sign in">
+      {!verifiedUser && !initData && <section className="browser-auth-card" aria-label="Telegram browser sign in">
         <div className="browser-auth-copy">
           <span className="eyebrow">WEB ACCESS</span>
           <h2>{authState === 'verified' ? 'Telegram connected' : 'Continue with Telegram'}</h2>
@@ -264,7 +279,7 @@ function App() {
         {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please try again.</p>}
       </section>}
 
-      <section className="stats-grid" aria-label="Collection overview">
+      {verifiedUser && <section className="stats-grid" aria-label="Collection overview">
         <article className="stat-card stat-main">
           <div className="stat-label">Total usernames <Layers3 size={16} /></div>
           <div className="stat-value">05</div>
@@ -280,7 +295,7 @@ function App() {
           <div className="stat-value">04</div>
           <div className="stat-foot">On profiles or chats</div>
         </article>
-      </section>
+      </section>}
 
       </>}
       {activePage === 'market' && <section className="page-intro"><div className="eyebrow"><ChartNoAxesCombined size={13} /> MARKET OVERVIEW</div><h1>Signals, not<br /><span>speculation.</span></h1><p>Verified Telegram collectible username sales only. Figures remain blank until trusted sales data is available.</p></section>}
@@ -309,7 +324,7 @@ function App() {
         <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Market data is currently {marketBoard?.available ? 'connected, but only ingested verified records are shown' : 'not connected'}.</p>
       </section>}
 
-      {activePage === 'collection' && <><section className="collection-section">
+      {activePage === 'collection' && verifiedUser && <><section className="collection-section">
         <div className="section-heading">
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
           <button className="icon-button" aria-label="Sort usernames" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
@@ -359,15 +374,17 @@ function App() {
 
       <div className="wallet-details"><article><span className="wallet-detail-icon"><ShieldCheck size={18} /></span><div><strong>Wallet stays yours</strong><p>Connecting a wallet does not transfer ownership or give TTOGRM access to your keys.</p></div></article><article><span className="wallet-detail-icon"><Gem size={18} /></span><div><strong>Gram (GRAM)</strong><p>GRAM is the native currency. TON is the blockchain network.</p></div></article><article><span className="wallet-detail-icon"><LockKeyhole size={18} /></span><div><strong>No seed phrases</strong><p>Approve requests in your wallet app. Never enter recovery phrases into TTOGRM.</p></div></article></div>
       </>}
-      {activePage === 'settings' && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Sample inventory is still used for preview; private database inventory is not connected yet.</p></div></div><span className="settings-status">Preview</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
+      {activePage === 'settings' && verifiedUser && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Sample inventory is still used for preview; private database inventory is not connected yet.</p></div></div><span className="settings-status">Preview</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
+
+      {!verifiedUser && activePage === 'settings' && <section className="guest-settings"><div className="page-intro"><div className="eyebrow"><ShieldCheck size={13} /> YOUR PRIVACY</div><h1>Your account,<br /><span>your control.</span></h1><p>Sign in with Telegram to access your personal workspace and manage account preferences. Wallet connection is optional and independent.</p><button className="primary-button guest-settings-cta" onClick={() => navigateTo('collection')}>Continue to sign in <ArrowUpRight size={16} /></button></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><LockKeyhole size={18} /></span><div><strong>Private by design</strong><p>Sign-in identifies your Telegram account. Private inventory access will only be enabled after database authorization is connected.</p></div></div></article></section>}
 
       <footer className="footer">
-        <span><LockKeyhole size={13} /> Private by default</span>
+        <span><LockKeyhole size={13} /> {verifiedUser ? "Your workspace" : "Private by design"}</span>
         <button onClick={() => setShowAbout(true)}>About TTOGRM <ArrowUpRight size={13} /></button>
       </footer>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        <button className={activePage === 'collection' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'collection' ? 'page' : undefined} onClick={() => navigateTo('collection')}><Grid2X2 size={19} /><span>Collection</span></button>
+        <button className={activePage === 'collection' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'collection' ? 'page' : undefined} onClick={() => navigateTo('collection')}><Grid2X2 size={19} /><span>{verifiedUser ? "Collection" : "Home"}</span></button>
         <button className={activePage === 'market' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'market' ? 'page' : undefined} onClick={() => navigateTo('market')}><ChartNoAxesCombined size={19} /><span>Market</span></button>
         <button className={activePage === 'wallet' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'wallet' ? 'page' : undefined} onClick={() => navigateTo('wallet')}><Wallet size={19} /><span>Wallet</span></button>
         <button className={activePage === 'settings' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'settings' ? 'page' : undefined} onClick={() => navigateTo('settings')}><Settings2 size={19} /><span>Settings</span></button>
