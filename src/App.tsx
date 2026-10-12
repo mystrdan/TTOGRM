@@ -64,6 +64,32 @@ function App() {
   const authEndpoint = import.meta.env.VITE_TELEGRAM_AUTH_URL || '/api/auth'
 
   useEffect(() => {
+    if (initData) return
+    let active = true
+    fetch('/api/telegram-session', { credentials: 'same-origin', cache: 'no-store' })
+      .then(async (response) => {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Session check failed')
+        return result as { authenticated: boolean; user?: VerifiedTelegramUser }
+      })
+      .then((result) => {
+        if (!active) return
+        if (result.authenticated && result.user) {
+          setVerifiedUser(result.user)
+          setAuthState('verified')
+        }
+      })
+      .catch(() => { /* Keep preview mode available when session checks fail. */ })
+    return () => { active = false }
+  }, [initData])
+
+  const signOut = async () => {
+    await fetch('/api/telegram-session', { method: 'DELETE', credentials: 'same-origin' })
+    setVerifiedUser(null)
+    setAuthState('preview')
+  }
+
+  useEffect(() => {
     if (!initData) return
     let active = true
     setAuthState('checking')
@@ -122,7 +148,7 @@ function App() {
     script.setAttribute('data-telegram-login', botUsername)
     script.setAttribute('data-size', 'large')
     script.setAttribute('data-userpic', 'false')
-    script.setAttribute('data-request-access', 'write')
+    script.setAttribute('data-request-access', 'read')
     script.setAttribute('data-onauth', 'onTelegramAuth(user)')
     container.replaceChildren(script)
     return () => {
@@ -214,6 +240,7 @@ function App() {
         {botUsername
           ? <div id="telegram-login-container" className="telegram-login-container" />
           : <p className="setup-hint">Telegram browser login needs <code>VITE_TELEGRAM_BOT_USERNAME</code> in Vercel and the production domain linked to your bot in BotFather.</p>}
+        {authState === 'verified' && <button className="sign-out-button" onClick={() => void signOut()}>Sign out</button>}
         {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please try again.</p>}
       </section>}
 
