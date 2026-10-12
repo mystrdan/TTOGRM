@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { TonConnectButton, useTonAddress, useTonWallet } from '@tonconnect/ui-react'
 import {
   ArrowDownUp,
   ArrowUpRight,
@@ -50,10 +51,14 @@ type VerifiedTelegramUser = {
   last_name?: string
   username?: string
   photo_url?: string
+  auth_date?: number
 }
 
 function App() {
   const [verifiedUser, setVerifiedUser] = useState<VerifiedTelegramUser | null>(null)
+  const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '').replace(/^@/, '')
+  const walletAddress = useTonAddress()
+  const wallet = useTonWallet()
   const [authState, setAuthState] = useState<'preview' | 'checking' | 'verified' | 'failed'>('preview')
   const initData = window.Telegram?.WebApp?.initData ?? ''
   const authEndpoint = import.meta.env.VITE_TELEGRAM_AUTH_URL || '/api/auth'
@@ -85,9 +90,49 @@ function App() {
     return () => { active = false }
   }, [initData])
 
+
+  useEffect(() => {
+    if (initData || !botUsername) return
+    const container = document.getElementById('telegram-login-container')
+    if (!container) return
+    window.onTelegramAuth = (user) => {
+      setAuthState('checking')
+      fetch('/api/telegram-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user }),
+      })
+        .then(async (response) => {
+          const result = await response.json()
+          if (!response.ok) throw new Error(result.error || 'Telegram login failed')
+          return result.user as VerifiedTelegramUser
+        })
+        .then((user) => {
+          setVerifiedUser(user)
+          setAuthState('verified')
+        })
+        .catch(() => {
+          setVerifiedUser(null)
+          setAuthState('failed')
+        })
+    }
+    const script = document.createElement('script')
+    script.src = 'https://telegram.org/js/telegram-widget.js?22'
+    script.async = true
+    script.setAttribute('data-telegram-login', botUsername)
+    script.setAttribute('data-size', 'large')
+    script.setAttribute('data-userpic', 'false')
+    script.setAttribute('data-request-access', 'write')
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+    container.replaceChildren(script)
+    return () => {
+      container.replaceChildren()
+      delete window.onTelegramAuth
+    }
+  }, [botUsername, initData])
+
   const [filter, setFilter] = useState<Filter>('All names')
   const [query, setQuery] = useState('')
-  const [showWalletInfo, setShowWalletInfo] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [showBotHelp, setShowBotHelp] = useState(false)
   const [sortNewest, setSortNewest] = useState(false)
@@ -159,6 +204,18 @@ function App() {
           <span className={authState === 'verified' ? 'connection-pill connected' : 'connection-pill'}><span />{authState === 'verified' ? 'Identity verified' : authState === 'checking' ? 'Verifying Telegram' : authState === 'failed' ? 'Verification failed' : 'Preview mode'}</span>
         </div>
       </section>
+
+      {!initData && <section className="browser-auth-card" aria-label="Telegram browser sign in">
+        <div className="browser-auth-copy">
+          <span className="eyebrow">WEB ACCESS</span>
+          <h2>{authState === 'verified' ? 'Telegram connected' : 'Continue with Telegram'}</h2>
+          <p>{authState === 'verified' ? 'Your Telegram identity has been verified for this browser session.' : 'Open TTOGRM from any browser or desktop. Sign in with Telegram, then connect your TON wallet independently.'}</p>
+        </div>
+        {botUsername
+          ? <div id="telegram-login-container" className="telegram-login-container" />
+          : <p className="setup-hint">Telegram browser login needs <code>VITE_TELEGRAM_BOT_USERNAME</code> in Vercel and the production domain linked to your bot in BotFather.</p>}
+        {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please try again.</p>}
+      </section>}
 
       <section className="stats-grid" aria-label="Collection overview">
         <article className="stat-card stat-main">
@@ -242,8 +299,11 @@ function App() {
 
       <section className="wallet-card">
         <div className="wallet-icon"><Wallet size={22} /></div>
-        <div className="wallet-copy"><h3>Connect your TON wallet</h3><p>Match collectible usernames held in your wallet with your Telegram inventory.</p></div>
-        <button className="wallet-action" onClick={() => setShowWalletInfo(true)} aria-label="Learn about wallet connection"><ArrowUpRight size={18} /></button>
+        <div className="wallet-copy">
+          <h3>{wallet ? 'TON wallet connected' : 'Connect your TON wallet'}</h3>
+          <p>{walletAddress ? `Connected address: ${walletAddress.slice(0, 8)}…${walletAddress.slice(-6)}. Gram (GRAM) is the native currency; TON is the blockchain.` : 'Connect from Telegram, a mobile browser, or desktop to use a TON wallet. TTOGRM never receives your private keys.'}</p>
+        </div>
+        <TonConnectButton />
       </section>
 
       <footer className="footer">
@@ -254,7 +314,7 @@ function App() {
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className="nav-item active"><Grid2X2 size={19} /><span>Collection</span></button>
         <button className="nav-item" onClick={() => document.getElementById('market-board-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><ChartNoAxesCombined size={19} /><span>Market</span></button>
-        <button className="nav-item" onClick={() => setShowWalletInfo(true)}><Wallet size={19} /><span>Wallet</span></button>
+        <button className="nav-item" onClick={() => document.querySelector('.wallet-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })><Wallet size={19} /><span>Wallet</span></button>
         <button className="nav-item" onClick={() => setShowAbout(true)}><Settings2 size={19} /><span>Settings</span></button>
       </nav>
 
@@ -278,7 +338,7 @@ function App() {
         </section>
       </div>}
 
-      {showWalletInfo && <div className="modal-backdrop" role="presentation" onClick={() => setShowWalletInfo(false)}>
+      {false && <div className="modal-backdrop" role="presentation" onClick={() => {}}>
         <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="wallet-title" onClick={(event) => event.stopPropagation()}>
           <button className="modal-close" aria-label="Close" onClick={() => setShowWalletInfo(false)}><X size={18} /></button>
           <span className="modal-icon"><Wallet size={24} /></span>
