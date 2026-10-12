@@ -181,11 +181,11 @@ function App() {
       <section className="market-board" aria-labelledby="market-board-title">
         <div className="section-heading">
           <div><div className="eyebrow"><ChartNoAxesCombined size={13} /> TELEGRAM USERNAME MARKET</div><h2 id="market-board-title">Market info board</h2></div>
-          <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? 'Feed connected' : 'Awaiting data'}</span>
+          <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Feed connected' : 'No verified sales loaded') : 'Awaiting data'}</span>
         </div>
-        <p className="board-intro">Public sales activity for Telegram collectible usernames over the rolling 24-hour window. Only verified records are counted; current feed status: {marketBoard?.available ? 'connected' : 'not connected'}.</p>
+        <p className="board-intro">Public sales activity for Telegram collectible usernames over the rolling 24-hour window. Only verified records are counted; current feed status: {marketBoard?.available ? (marketBoard.soldCount > 0 ? 'connected with verified records' : 'reachable, but no verified sales are loaded') : 'not connected'}.</p>
         <div className="market-metrics">
-          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? 'Verified sale records' : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Verified sale records' : 'No verified records in the current window') : 'Waiting for trusted feed'}</small></article>
           <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeGram !== null ? formatGram(marketBoard.volumeGram) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
           <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatGram(marketBoard.topSale.sale_price_gram) : 'No verified top sale yet'}</small></article>
         </div>
