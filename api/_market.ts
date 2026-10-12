@@ -18,7 +18,9 @@ export type MarketBoard = {
 
 export async function loadMarketBoard(): Promise<MarketBoard> {
   const baseUrl = (process.env.SUPABASE_URL || 'https://eugovevzpptsfstkjcaf.supabase.co').replace(/\/$/, '')
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Prefer the current secret API key; keep legacy service_role support during migration.
+  const secretKey = process.env.SUPABASE_SECRET_KEY
+  const serviceKey = secretKey || process.env.SUPABASE_SERVICE_ROLE_KEY
   const now = new Date()
   const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
 
@@ -31,7 +33,7 @@ export async function loadMarketBoard(): Promise<MarketBoard> {
       method: 'POST',
       headers: {
         apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
+        ...(!secretKey ? { Authorization: `Bearer ${serviceKey}` } : {}),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({}),
