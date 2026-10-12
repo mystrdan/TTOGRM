@@ -13,8 +13,29 @@ type InventoryInput = {
 
 function sessionUser(req: VercelRequest): SessionPayload['user'] | null {
   const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) return null
+  const initData = typeof req.headers['x-telegram-init-data'] === 'string' ? req.headers['x-telegram-init-data'] : ''
+  if (initData) {
+    const params = new URLSearchParams(initData)
+    const receivedHash = params.get('hash') || ''
+    params.delete('hash')
+    const checkString = [...params.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join('\\n')
+    const secret = createHmac('sha256', 'WebAppData').update(token).digest()
+    const expected = createHmac('sha256', secret).update(checkString).digest()
+    const received = /^[a-f0-9]{64}$/i.test(receivedHash) ? Buffer.from(receivedHash, 'hex') : Buffer.alloc(0)
+    const authDate = Number(params.get('auth_date'))
+    const now = Math.floor(Date.now() / 1000)
+    if (received.length === expected.length && timingSafeEqual(received, expected) && Number.isSafeInteger(authDate) && authDate <= now + 30 && now - authDate <= 86400) {
+      try {
+        const rawUser = params.get('user')
+        const miniUser = rawUser ? JSON.parse(rawUser) as { id?: number; first_name?: string } : null
+        if (miniUser && Number.isSafeInteger(miniUser.id) && (miniUser.id || 0) > 0 && typeof miniUser.first_name === 'string') return { id: miniUser.id!, first_name: miniUser.first_name }
+      } catch { /* Reject malformed Mini App user data. */ }
+    }
+    return null
+  }
   const cookieHeader = req.headers.cookie
-  if (!token || !cookieHeader) return null
+  if (!cookieHeader) return null
   const cookie = cookieHeader.split(';').map((part) => part.trim()).find((part) => part.startsWith('ttogrm_session='))
   const value = cookie?.slice('ttogrm_session='.length)
   if (!value) return null
