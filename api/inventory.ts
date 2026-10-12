@@ -19,7 +19,7 @@ function sessionUser(req: VercelRequest): SessionPayload['user'] | null {
     const params = new URLSearchParams(initData)
     const receivedHash = params.get('hash') || ''
     params.delete('hash')
-    const checkString = [...params.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join('\\n')
+    const checkString = [...params.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join('\n')
     const secret = createHmac('sha256', 'WebAppData').update(token).digest()
     const expected = createHmac('sha256', secret).update(checkString).digest()
     const received = /^[a-f0-9]{64}$/i.test(receivedHash) ? Buffer.from(receivedHash, 'hex') : Buffer.alloc(0)
