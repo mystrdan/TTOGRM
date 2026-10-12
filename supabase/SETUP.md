@@ -28,13 +28,28 @@ In **Vercel → Project → Settings → Environment Variables**, configure the 
 - `TELEGRAM_BOT_TOKEN`: bot token for server-side Telegram authentication and replies.
 - `TELEGRAM_WEBHOOK_SECRET`: a random secret used to validate incoming Telegram webhook requests.
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
-- `SUPABASE_SERVICE_ROLE_KEY`: needed for the server-side market-board API. Never expose this in frontend code.
+- `SUPABASE_SECRET_KEY`: preferred current server-only Supabase secret API key (`sb_secret_...`), used by the server-side market-board and private inventory APIs. Never expose this in frontend code. `SUPABASE_SERVICE_ROLE_KEY` (legacy JWT key) remains a temporary fallback.
 - `VITE_TELEGRAM_AUTH_URL`: optional public endpoint URL for the Supabase auth function, if the frontend should call it instead of `/api/auth`.
 - `VITE_TELEGRAM_BOT_USERNAME`: the bot username without `@`, required for Telegram Login Widget sign-in on desktop and regular browsers.
 
 For browser login, also link the production domain to your bot through BotFather `/setdomain`. The Telegram Login Widget callback is verified server-side by `POST /api/telegram-login`; it does not authorize private inventory reads by itself.
 
-Do not create a `VITE_TELEGRAM_BOT_TOKEN` or `VITE_SUPABASE_SERVICE_ROLE_KEY`. Vite-prefixed variables are exposed to browser code. After changing environment variables, trigger a fresh deployment for the target environment.
+Do not create a `VITE_TELEGRAM_BOT_TOKEN`, `VITE_SUPABASE_SECRET_KEY`, or `VITE_SUPABASE_SERVICE_ROLE_KEY`. Vite-prefixed variables are exposed to browser code. After changing environment variables, trigger a fresh deployment for the target environment.
+
+## Configure the Supabase server key in Vercel
+
+1. Open the [TTOGRM Vercel project](https://vercel.com/capsicom/ttogrm).
+2. Go to **Settings → Environment Variables**.
+3. Add a variable named `SUPABASE_SECRET_KEY`.
+4. In Supabase, open project `eugovevzpptsfstkjcaf` and navigate to **Settings → API Keys**.
+5. In the **Publishable and secret API keys** tab, copy the **secret** key (it begins with `sb_secret_`). Do not copy the publishable key.
+6. Paste that value directly into Vercel's value field. Select **Production** and also **Preview** if you want preview deployments to use the database. Save.
+7. Ensure `SUPABASE_URL` is set to `https://eugovevzpptsfstkjcaf.supabase.co`.
+8. Redeploy the latest production deployment so the serverless functions receive the new variable.
+
+The current API routes prefer `SUPABASE_SECRET_KEY` and send it in the `apikey` header only, as required for Supabase's new non-JWT secret keys. They retain `SUPABASE_SERVICE_ROLE_KEY` as a fallback for the older JWT-based key. If the project does not yet show a **secret** key, create the new API keys in **Settings → API Keys** first. Supabase is deprecating the legacy `service_role` key by the end of 2026, so prefer the new format.
+
+Never put this key in `src/`, browser code, GitHub Actions logs, a public repository, or a `VITE_*` variable. Anyone who gets it can bypass RLS. TTOGRM's API must therefore authenticate the Telegram user and scope each query to that user before accessing private records.
 
 ## Add the Telegram bot token securely
 
