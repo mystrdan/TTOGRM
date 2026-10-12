@@ -307,7 +307,7 @@ function App() {
           </div>)}
         </div>}
         <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Market data is currently {marketBoard?.available ? 'connected, but only ingested verified records are shown' : 'not connected'}.</p>
-      </section>
+      </section>}
 
       {activePage === 'collection' && <><section className="collection-section">
         <div className="section-heading">
