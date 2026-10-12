@@ -19,8 +19,9 @@ const HELP = [
   '/sales — Reported sales in the last 24 hours',
   '/top — Highest reported username sale',
   '/stats — Market data coverage and status',
+  '/currency — Explain Gram (GRAM) and the TON blockchain',
   '',
-  'Market prices are shown in Gram (GRAM), TON's native currency. Sales figures will only be shown when a trusted data source is connected. TTOGRM does not invent market numbers.',
+  'Market prices are denominated in Gram (GRAM), the native currency of the TON blockchain. Sales figures will only be shown when a trusted data source is connected. TTOGRM does not invent market numbers.',
 ].join('\n')
 
 const DATA_PENDING = 'The TTOGRM sales data feed is not connected yet, so verified market figures are currently unavailable. We will not guess sales counts or prices.'
@@ -59,6 +60,8 @@ function responseFor(command: string, firstName = '', board?: MarketBoard) {
       if (!board.topSale) return '🏆 No verified username sale with a disclosed price is recorded in the current 24-hour window.'
       return `🏆 Top username sale · rolling 24 hours\n\nUsername: @${board.topSale.username}\nSale price: ${formatGram(board.topSale.sale_price_gram === null ? null : Number(board.topSale.sale_price_gram))}\nSale time: ${board.topSale.sold_at}${board.topSale.source_url ? `\nSource: ${board.topSale.source_url}` : ''}`
     }
+    case '/currency':
+      return 'Currency: Gram (GRAM). Blockchain: TON. Market prices in TTOGRM are denominated in GRAM; TON refers to the network, not the currency ticker.'
     case '/stats':
       return `TTOGRM service status\n\n• Bot command endpoint: active\n• Market data source: ${board?.available ? 'connected' : 'not connected'}\n• Verified sales in current 24h window: ${board?.available ? board.soldCount : 'unavailable'}\n\nA zero count means no verified records are loaded in the current window; it does not prove that no usernames were sold.`
     default:
