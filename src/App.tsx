@@ -338,17 +338,6 @@ function App() {
         </section>
       </div>}
 
-      {false && <div className="modal-backdrop" role="presentation" onClick={() => {}}>
-        <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="wallet-title" onClick={(event) => event.stopPropagation()}>
-          <button className="modal-close" aria-label="Close" onClick={() => setShowWalletInfo(false)}><X size={18} /></button>
-          <span className="modal-icon"><Wallet size={24} /></span>
-          <h2 id="wallet-title">TON wallet connection</h2>
-          <p>Wallet linking is planned. It will help identify collectible username NFTs held at a connected wallet address on TON, the blockchain. Gram (GRAM) is the network's native currency. It won't, by itself, prove ownership of every Telegram profile, group or channel.</p>
-          <div className="modal-footnote"><ShieldCheck size={16} /> TTOGRM will never ask for your wallet seed phrase.</div>
-          <button className="primary-button" onClick={() => setShowWalletInfo(false)}>Got it</button>
-        </section>
-      </div>}
-
       {showAbout && <div className="modal-backdrop" role="presentation" onClick={() => setShowAbout(false)}>
         <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title" onClick={(event) => event.stopPropagation()}>
           <button className="modal-close" aria-label="Close" onClick={() => setShowAbout(false)}><X size={18} /></button>
