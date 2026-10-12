@@ -237,3 +237,7 @@ h1 span { color: var(--blue); }
 .inventory-edit-actions button { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: #203644; color: #eaf2f7; font: inherit; font-size: 11px; cursor: pointer; }
 .inventory-edit-actions button:first-child { background: #7ed957; border-color: #7ed957; color: #10200b; font-weight: 700; }
 .inventory-edit-actions button:disabled { opacity: .6; cursor: wait; }
+
+
+.collection-heading-actions { display: flex; align-items: center; gap: 7px; }
+.collection-heading-actions .icon-button:disabled { opacity: .35; cursor: not-allowed; }
