@@ -469,7 +469,7 @@ function App() {
         <div className="section-heading">
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
           <div className="collection-heading-actions">
-            <button className="icon-button" aria-label="Export inventory as CSV" title="Export CSV" onClick={exportInventoryCsv} disabled={inventory.length === 0}><Download size={17} /></button>
+            <button className="icon-button" aria-label="Download collection" title="Download collection" onClick={exportInventoryCsv} disabled={inventory.length === 0}><Download size={17} /></button>
             <button className="icon-button" aria-label="Sort usernames" title="Reverse sort order" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
           </div>
         </div>
@@ -478,7 +478,7 @@ function App() {
           <label className="search-box"><Search size={18} /><input value={newHandle} onChange={(event) => setNewHandle(event.target.value)} placeholder="@username" aria-label="Username to add" maxLength={33} /></label>
           <div className="inventory-form-row">
             <label>Type<select value={newKind} onChange={(event) => setNewKind(event.target.value as typeof newKind)}><option value="personal">Personal</option><option value="group">Group</option><option value="channel">Channel</option></select></label>
-            <label>Username class<select value={newUsernameType} onChange={(event) => setNewUsernameType(event.target.value as typeof newUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
+            <label>Name type<select value={newUsernameType} onChange={(event) => setNewUsernameType(event.target.value as typeof newUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
             <label>Assignment<select value={newAssignment} onChange={(event) => setNewAssignment(event.target.value as typeof newAssignment)}><option value="unknown">Unknown</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select></label>
           </div>
           <input className="inventory-title-input" value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder="Optional note (e.g. personal profile)" aria-label="Optional username note" maxLength={100} />
@@ -506,7 +506,7 @@ function App() {
                   <input value={editHandle} onChange={(event) => setEditHandle(event.target.value)} aria-label="Edit username" maxLength={33} />
                   <div className="inventory-form-row">
                     <label>Type<select value={editKind} onChange={(event) => setEditKind(event.target.value as typeof editKind)}><option value="personal">Personal</option><option value="group">Group</option><option value="channel">Channel</option></select></label>
-                    <label>Class<select value={editUsernameType} onChange={(event) => setEditUsernameType(event.target.value as typeof editUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
+                    <label>Name type<select value={editUsernameType} onChange={(event) => setEditUsernameType(event.target.value as typeof editUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
                     <label>Assignment<select value={editAssignment} onChange={(event) => setEditAssignment(event.target.value as typeof editAssignment)}><option value="unknown">Unknown</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select></label>
                   </div>
                   <input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} placeholder="Optional note" aria-label="Edit note" maxLength={100} />
