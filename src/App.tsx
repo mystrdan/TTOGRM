@@ -41,8 +41,8 @@ const demoUsernames: Username[] = [
 const filters = ['All names', 'Personal', 'Groups', 'Channels', 'Collectibles'] as const
 type Filter = (typeof filters)[number]
 
-type MarketSale = { username: string; sale_price_ton: number | string | null; sold_at: string; source_url?: string | null }
-type MarketBoard = { available: boolean; soldCount: number; volumeTon: number | null; topSale: MarketSale | null; recentSales: MarketSale[]; updatedAt: string | null; reason?: string }
+type MarketSale = { username: string; sale_price_gram: number | string | null; sold_at: string; source_url?: string | null }
+type MarketBoard = { available: boolean; soldCount: number; volumeGram: number | null; topSale: MarketSale | null; recentSales: MarketSale[]; updatedAt: string | null; reason?: string }
 
 type VerifiedTelegramUser = {
   id: number
@@ -108,10 +108,10 @@ function App() {
     return () => { active = false }
   }, [])
 
-  const formatTon = (value: number | string | null | undefined) => {
+  const formatGram = (value: number | string | null | undefined) => {
     if (value === null || value === undefined || value === '') return 'Price undisclosed'
     const number = Number(value)
-    return Number.isFinite(number) ? `${number.toLocaleString(undefined, { maximumFractionDigits: 3 })} TON` : 'Price undisclosed'
+    return Number.isFinite(number) ? `${number.toLocaleString(undefined, { maximumFractionDigits: 3 })} GRAM` : 'Price undisclosed'
   }
   const displayName = verifiedUser?.first_name || 'Your collection'
   const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
@@ -186,8 +186,8 @@ function App() {
         <p className="board-intro">Public sales activity for Telegram collectible usernames over the rolling 24-hour window. Only verified records are counted; current feed status: {marketBoard?.available ? 'connected' : 'not connected'}.</p>
         <div className="market-metrics">
           <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? 'Verified sale records' : 'Waiting for trusted feed'}</small></article>
-          <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeTon !== null ? formatTon(marketBoard.volumeTon) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
-          <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatTon(marketBoard.topSale.sale_price_ton) : 'No verified top sale yet'}</small></article>
+          <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeGram !== null ? formatGram(marketBoard.volumeGram) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatGram(marketBoard.topSale.sale_price_gram) : 'No verified top sale yet'}</small></article>
         </div>
         <div className="market-board-bottom">
           <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest verified records` : marketBoard?.reason || 'No verified sale records loaded yet.'}</span></div>
@@ -196,7 +196,7 @@ function App() {
         {marketBoard?.available && marketBoard.recentSales.length > 0 && <div className="market-sales-list">
           {marketBoard.recentSales.map((sale, index) => <div className="market-sale-row" key={`${sale.username}-${sale.sold_at}-${index}`}>
             <div><strong>@{sale.username}</strong><span>{new Date(sale.sold_at).toLocaleString()}</span></div>
-            <strong>{formatTon(sale.sale_price_ton)}</strong>
+            <strong>{formatGram(sale.sale_price_gram)}</strong>
             {sale.source_url && <a href={sale.source_url} target="_blank" rel="noreferrer" aria-label={`Open sale source for ${sale.username}`}><ArrowUpRight size={14} /></a>}
           </div>)}
         </div>}
@@ -282,7 +282,7 @@ function App() {
           <button className="modal-close" aria-label="Close" onClick={() => setShowWalletInfo(false)}><X size={18} /></button>
           <span className="modal-icon"><Wallet size={24} /></span>
           <h2 id="wallet-title">TON wallet connection</h2>
-          <p>Wallet linking is planned. It will help identify collectible username NFTs held at a connected TON address. It won't, by itself, prove ownership of every Telegram profile, group or channel.</p>
+          <p>Wallet linking is planned. It will help identify collectible username NFTs held at a connected wallet address on TON, the blockchain. Gram (GRAM) is the network's native currency. It won't, by itself, prove ownership of every Telegram profile, group or channel.</p>
           <div className="modal-footnote"><ShieldCheck size={16} /> TTOGRM will never ask for your wallet seed phrase.</div>
           <button className="primary-button" onClick={() => setShowWalletInfo(false)}>Got it</button>
         </section>
