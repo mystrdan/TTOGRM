@@ -23,6 +23,7 @@ import {
 
 type Kind = 'Personal' | 'Groups' | 'Channels'
 type Username = {
+  id?: string
   handle: string
   kind: Kind
   collectible: boolean
@@ -47,6 +48,7 @@ function pageFromPath(path: string): Page {
   return last === 'market' || last === 'wallet' || last === 'settings' ? last : 'collection'
 }
 
+type InventoryRecord = { id: string; username: string; entity_type: 'personal' | 'group' | 'channel'; username_type: 'basic' | 'collectible'; assignment_status: 'assigned' | 'unassigned' | 'unknown'; title?: string | null; verification_status?: string }
 type MarketSale = { username: string; sale_price_gram: number | string | null; sold_at: string; source_url?: string | null }
 type MarketBoard = { available: boolean; soldCount: number; volumeGram: number | null; topSale: MarketSale | null; recentSales: MarketSale[]; updatedAt: string | null; reason?: string }
 
@@ -183,6 +185,15 @@ function App() {
   const [sortNewest, setSortNewest] = useState(false)
   const [marketBoard, setMarketBoard] = useState<MarketBoard | null>(null)
   const [marketLoading, setMarketLoading] = useState(true)
+  const [inventory, setInventory] = useState<Username[]>([])
+  const [inventoryLoading, setInventoryLoading] = useState(false)
+  const [inventoryError, setInventoryError] = useState('')
+  const [newHandle, setNewHandle] = useState('')
+  const [newKind, setNewKind] = useState<'personal' | 'group' | 'channel'>('personal')
+  const [newUsernameType, setNewUsernameType] = useState<'basic' | 'collectible'>('basic')
+  const [newAssignment, setNewAssignment] = useState<'assigned' | 'unassigned' | 'unknown'>('unknown')
+  const [newTitle, setNewTitle] = useState('')
+  const [savingInventory, setSavingInventory] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -198,6 +209,80 @@ function App() {
     return () => { active = false }
   }, [])
 
+
+  useEffect(() => {
+    if (!verifiedUser) { setInventory([]); return }
+    let active = true
+    setInventoryLoading(true)
+    setInventoryError('')
+    fetch('/api/inventory', { headers: initData ? { 'x-telegram-init-data': initData } : {}, credentials: 'same-origin', cache: 'no-store' })
+      .then(async (response) => {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Could not load your inventory.')
+        return result as { items: InventoryRecord[] }
+      })
+      .then((result) => {
+        if (!active) return
+        setInventory(result.items.map((item) => ({
+          id: item.id, handle: '@' + item.username.replace(/^@/, ''),
+          kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
+          collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned',
+          note: item.title || (item.verification_status === 'verified' ? 'Verified record' : 'Manually added · not ownership-verified'),
+          color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
+        })))
+      })
+      .catch((error) => { if (active) setInventoryError(error instanceof Error ? error.message : 'Could not load your inventory.') })
+      .finally(() => { if (active) setInventoryLoading(false) })
+    return () => { active = false }
+  }, [verifiedUser, initData])
+
+  const saveInventoryItem = async () => {
+    const cleanHandle = newHandle.trim().replace(/^@/, '')
+    if (!/^[A-Za-z0-9_]{5,32}$/.test(cleanHandle)) {
+      setInventoryError('Enter a valid Telegram username (5–32 letters, numbers or underscores).')
+      return
+    }
+    setSavingInventory(true)
+    setInventoryError('')
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(initData ? { 'x-telegram-init-data': initData } : {}) },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username: cleanHandle, entity_type: newKind, username_type: newUsernameType, assignment_status: newAssignment, title: newTitle }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not save this username.')
+      const item = result.item as InventoryRecord
+      setInventory((current) => [{
+        id: item.id, handle: '@' + item.username,
+        kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
+        collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned',
+        note: item.title || 'Manually added · not ownership-verified',
+        color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
+      }, ...current])
+      setNewHandle('')
+      setNewTitle('')
+    } catch (error) {
+      setInventoryError(error instanceof Error ? error.message : 'Could not save this username.')
+    } finally { setSavingInventory(false) }
+  }
+
+  const removeInventoryItem = async (item: Username) => {
+    if (!item.id) return
+    setInventoryError('')
+    try {
+      const response = await fetch('/api/inventory?id=' + encodeURIComponent(item.id), {
+        method: 'DELETE', headers: initData ? { 'x-telegram-init-data': initData } : {}, credentials: 'same-origin',
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not remove this username.')
+      setInventory((current) => current.filter((entry) => entry.id !== item.id))
+    } catch (error) {
+      setInventoryError(error instanceof Error ? error.message : 'Could not remove this username.')
+    }
+  }
+
   const formatGram = (value: number | string | null | undefined) => {
     if (value === null || value === undefined || value === '') return 'Price undisclosed'
     const number = Number(value)
@@ -207,7 +292,7 @@ function App() {
   const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
 
   const filtered = useMemo(() => {
-    let list = demoUsernames.filter((item) => {
+    let list = inventory.filter((item) => {
       const matchesFilter =
         filter === 'All names' ||
         (filter === 'Collectibles' && item.collectible) ||
@@ -217,7 +302,7 @@ function App() {
     })
     if (sortNewest) list = [...list].reverse()
     return list
-  }, [filter, query, sortNewest])
+  }, [inventory, filter, query, sortNewest])
 
   const chooseFilter = (next: Filter) => {
     setFilter(next)
@@ -282,18 +367,18 @@ function App() {
       {verifiedUser && <section className="stats-grid" aria-label="Collection overview">
         <article className="stat-card stat-main">
           <div className="stat-label">Total usernames <Layers3 size={16} /></div>
-          <div className="stat-value">05</div>
-          <div className="stat-foot">Demo inventory <span>·</span> not synced yet</div>
+          <div className="stat-value">{inventory.length.toString().padStart(2, '0')}</div>
+          <div className="stat-foot">Saved to your private inventory</div>
         </article>
         <article className="stat-card">
           <div className="stat-label">Collectibles <Gem size={16} /></div>
-          <div className="stat-value">02</div>
-          <div className="stat-foot">NFT usernames</div>
+          <div className="stat-value">{inventory.filter((item) => item.collectible).length.toString().padStart(2, '0')}</div>
+          <div className="stat-foot">Collectible usernames</div>
         </article>
         <article className="stat-card">
           <div className="stat-label">Assigned <Check size={16} /></div>
-          <div className="stat-value">04</div>
-          <div className="stat-foot">On profiles or chats</div>
+          <div className="stat-value">{inventory.filter((item) => item.assigned).length.toString().padStart(2, '0')}</div>
+          <div className="stat-foot">Marked as assigned</div>
         </article>
       </section>}
 
@@ -329,6 +414,18 @@ function App() {
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
           <button className="icon-button" aria-label="Sort usernames" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
         </div>
+        <form className="inventory-add-form" onSubmit={(event) => { event.preventDefault(); void saveInventoryItem() }}>
+          <div className="inventory-form-heading"><strong>Add a username</strong><span>Manual records are not proof of ownership.</span></div>
+          <label className="search-box"><Search size={18} /><input value={newHandle} onChange={(event) => setNewHandle(event.target.value)} placeholder="@username" aria-label="Username to add" maxLength={33} /></label>
+          <div className="inventory-form-row">
+            <label>Type<select value={newKind} onChange={(event) => setNewKind(event.target.value as typeof newKind)}><option value="personal">Personal</option><option value="group">Group</option><option value="channel">Channel</option></select></label>
+            <label>Username class<select value={newUsernameType} onChange={(event) => setNewUsernameType(event.target.value as typeof newUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
+            <label>Assignment<select value={newAssignment} onChange={(event) => setNewAssignment(event.target.value as typeof newAssignment)}><option value="unknown">Unknown</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select></label>
+          </div>
+          <input className="inventory-title-input" value={newTitle} onChange={(event) => setNewTitle(event.target.value)} placeholder="Optional note (e.g. personal profile)" aria-label="Optional username note" maxLength={100} />
+          <button className="primary-button inventory-save-button" type="submit" disabled={savingInventory}>{savingInventory ? 'Saving…' : 'Save to collection'} <ArrowUpRight size={15} /></button>
+        </form>
+        {inventoryError && <p className="auth-error inventory-error" role="alert">{inventoryError}</p>}
         <label className="search-box">
           <Search size={18} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search usernames" aria-label="Search usernames" />
@@ -338,6 +435,7 @@ function App() {
           {filters.map((item) => <button key={item} role="tab" aria-selected={filter === item} className={filter === item ? 'filter-chip active' : 'filter-chip'} onClick={() => chooseFilter(item)}>{item}</button>)}
         </div>
 
+        {inventoryLoading && <p className="inventory-loading">Loading your saved usernames…</p>}
         <div className="username-list">
           {filtered.map((item) => (
             <article className="username-card" key={item.handle}>
@@ -353,12 +451,12 @@ function App() {
                   <span className={item.assigned ? 'assignment-badge assigned' : 'assignment-badge'}>{item.assigned ? 'Assigned' : 'Unassigned'}</span>
                 </div>
               </div>
-              <button className="row-arrow" aria-label={`View ${item.handle}`} onClick={() => setShowAbout(true)}><ArrowUpRight size={18} /></button>
+              <button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button>
             </article>
           ))}
           {filtered.length === 0 && <div className="empty-state"><Search size={22} /><strong>No usernames found</strong><span>Try a different search or category.</span></div>}
         </div>
-        <p className="demo-note"><Sparkles size={14} /> Sample usernames shown for interface preview. Live discovery is not connected yet.</p>
+        <p className="demo-note"><ShieldCheck size={14} /> Saved records are private to your account. Adding a username does not verify Telegram ownership; automatic discovery is not connected yet.</p>
       </section>
 
       </>}
@@ -374,7 +472,7 @@ function App() {
 
       <div className="wallet-details"><article><span className="wallet-detail-icon"><ShieldCheck size={18} /></span><div><strong>Wallet stays yours</strong><p>Connecting a wallet does not transfer ownership or give TTOGRM access to your keys.</p></div></article><article><span className="wallet-detail-icon"><Gem size={18} /></span><div><strong>Gram (GRAM)</strong><p>GRAM is the native currency. TON is the blockchain network.</p></div></article><article><span className="wallet-detail-icon"><LockKeyhole size={18} /></span><div><strong>No seed phrases</strong><p>Approve requests in your wallet app. Never enter recovery phrases into TTOGRM.</p></div></article></div>
       </>}
-      {activePage === 'settings' && verifiedUser && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Sample inventory is still used for preview; private database inventory is not connected yet.</p></div></div><span className="settings-status">Preview</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
+      {activePage === 'settings' && verifiedUser && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Your saved username records are private to your verified Telegram account. Manual entries are not ownership proof.</p></div></div><span className="settings-status">Private</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
 
       {!verifiedUser && activePage === 'settings' && <section className="guest-settings"><div className="page-intro"><div className="eyebrow"><ShieldCheck size={13} /> YOUR PRIVACY</div><h1>Your account,<br /><span>your control.</span></h1><p>Sign in with Telegram to access your personal workspace and manage account preferences. Wallet connection is optional and independent.</p><button className="primary-button guest-settings-cta" onClick={() => navigateTo('collection')}>Continue to sign in <ArrowUpRight size={16} /></button></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><LockKeyhole size={18} /></span><div><strong>Private by design</strong><p>Sign-in identifies your Telegram account. Private inventory access will only be enabled after database authorization is connected.</p></div></div></article></section>}
 
