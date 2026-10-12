@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   Check,
   CircleHelp,
+  Download,
   ChartNoAxesCombined,
   Gem,
   Grid2X2,
@@ -28,6 +29,7 @@ type Username = {
   kind: Kind
   collectible: boolean
   assigned: boolean
+  assignmentStatus: 'assigned' | 'unassigned' | 'unknown'
   note: string
   color: string
 }
@@ -224,7 +226,7 @@ function App() {
         setInventory(result.items.map((item) => ({
           id: item.id, handle: '@' + item.username.replace(/^@/, ''),
           kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
-          collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned',
+          collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status,
           note: item.title || (item.verification_status === 'verified' ? 'Verified record' : 'Manually added · not ownership-verified'),
           color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
         })))
@@ -255,7 +257,7 @@ function App() {
       setInventory((current) => [{
         id: item.id, handle: '@' + item.username,
         kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
-        collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned',
+        collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status,
         note: item.title || 'Manually added · not ownership-verified',
         color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
       }, ...current])
@@ -272,7 +274,7 @@ function App() {
     setEditHandle(item.handle.replace(/^@/, ''))
     setEditKind(item.kind === 'Groups' ? 'group' : item.kind === 'Channels' ? 'channel' : 'personal')
     setEditUsernameType(item.collectible ? 'collectible' : 'basic')
-    setEditAssignment(item.assigned ? 'assigned' : 'unassigned')
+    setEditAssignment(item.assignmentStatus)
     setEditTitle(item.note.startsWith('Manually added') ? '' : item.note)
     setInventoryError('')
   }
@@ -287,7 +289,7 @@ function App() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Could not update this username.')
       const item = result.item as InventoryRecord
-      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
+      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
       setEditingId(null)
     } catch (error) { setInventoryError(error instanceof Error ? error.message : 'Could not update this username.') }
     finally { setSavingInventory(false) }
@@ -305,6 +307,34 @@ function App() {
     } catch (error) {
       setInventoryError(error instanceof Error ? error.message : 'Could not remove this username.')
     }
+  }
+
+  const exportInventoryCsv = () => {
+    if (inventory.length === 0) return
+    const escapeCell = (value: string) => {
+      // Prevent spreadsheet formula execution when opening user-entered notes.
+      const safe = /^[=+\-@\t\r]/.test(value) ? "'" + value : value
+      return '"' + safe.replace(/"/g, '""') + '"'
+    }
+    const rows = [
+      ['username', 'entity_type', 'username_class', 'assignment_status', 'note', 'ownership_verification'],
+      ...inventory.map((item) => [
+        item.handle.replace(/^@/, ''),
+        item.kind === 'Groups' ? 'group' : item.kind === 'Channels' ? 'channel' : 'personal',
+        item.collectible ? 'collectible' : 'basic',
+        item.assignmentStatus,
+        item.note,
+        'unverified',
+      ]),
+    ]
+    const csv = '\uFEFF' + rows.map((row) => row.map(escapeCell).join(',')).join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'ttogrm-inventory.csv'
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   const formatGram = (value: number | string | null | undefined) => {
@@ -436,7 +466,10 @@ function App() {
       {activePage === 'collection' && verifiedUser && <><section className="collection-section">
         <div className="section-heading">
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
-          <button className="icon-button" aria-label="Sort usernames" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
+          <div className="collection-heading-actions">
+            <button className="icon-button" aria-label="Export inventory as CSV" title="Export CSV" onClick={exportInventoryCsv} disabled={inventory.length === 0}><Download size={17} /></button>
+            <button className="icon-button" aria-label="Sort usernames" title="Reverse sort order" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
+          </div>
         </div>
         <form className="inventory-add-form" onSubmit={(event) => { event.preventDefault(); void saveInventoryItem() }}>
           <div className="inventory-form-heading"><strong>Add a username</strong><span>Manual records are not proof of ownership.</span></div>
@@ -479,7 +512,7 @@ function App() {
                 </div> : <>
                   <div className="handle-title">{item.handle}{item.collectible && <span className="collectible-mark" title="Collectible username"><Gem size={12} /></span>}</div>
                   <div className="handle-subtitle">{item.note}</div>
-                  <div className="handle-badges"><span className="type-badge">{item.kind}</span><span className={item.collectible ? "type-badge collectible" : "type-badge"}>{item.collectible ? "Collectible" : "Basic"}</span><span className={item.assigned ? "assignment-badge assigned" : "assignment-badge"}>{item.assigned ? "Assigned" : "Unassigned"}</span></div>
+                  <div className="handle-badges"><span className="type-badge">{item.kind}</span><span className={item.collectible ? "type-badge collectible" : "type-badge"}>{item.collectible ? "Collectible" : "Basic"}</span><span className={item.assignmentStatus === 'assigned' ? "assignment-badge assigned" : "assignment-badge"}>{item.assignmentStatus === 'assigned' ? "Assigned" : item.assignmentStatus === 'unassigned' ? "Unassigned" : "Assignment unknown"}</span></div>
                 </>}
               </div>
               {editingId !== item.id && <div className="inventory-row-actions"><button className="row-arrow" aria-label={`Edit ${item.handle}`} onClick={() => beginEdit(item)} title="Edit username"><Pencil size={16} /></button><button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button></div>}
