@@ -101,19 +101,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const input = validInput((req.body || {}) as InventoryInput)
     if (!input) return res.status(400).json({ error: 'Enter a valid Telegram username and choose its type and assignment.' })
-    if (req.method === 'POST') {
-      const response = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ ...input, telegram_user_id: user.id, discovery_source: 'manual', verification_status: 'unverified' }) })
+    if (req.method === 'POST' || req.method === 'PUT') {
+      const editingId = req.method === 'PUT' ? String((req.body as InventoryInput | undefined)?.id || '') : ''
+      if (req.method === 'PUT' && !/^[0-9a-f-]{36}$/i.test(editingId)) return res.status(400).json({ error: 'A valid inventory item ID is required.' })
+      const duplicateUrl = `${endpoint}?select=id&telegram_user_id=eq.${user.id}&username=ilike.${encodeURIComponent(input.username)}&limit=2`
+      const duplicateResponse = await fetch(duplicateUrl, { headers, cache: 'no-store' })
+      if (!duplicateResponse.ok) return res.status(502).json({ error: 'Could not validate duplicate usernames.' })
+      const duplicateRows = await duplicateResponse.json() as Array<{ id: string }>
+      if (duplicateRows.some((row) => row.id !== editingId)) return res.status(409).json({ error: 'That username is already in your collection.' })
+      const response = req.method === 'POST'
+        ? await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify({ ...input, telegram_user_id: user.id, discovery_source: 'manual', verification_status: 'unverified' }) })
+        : await fetch(`${endpoint}?id=eq.${encodeURIComponent(editingId)}&telegram_user_id=eq.${user.id}`, { method: 'PATCH', headers, body: JSON.stringify({ ...input, updated_at: new Date().toISOString() }) })
       const body = await response.json().catch(() => null)
-      if (!response.ok) return res.status(502).json({ error: 'Could not save this username. Please try again.' })
-      return res.status(201).json({ item: Array.isArray(body) ? body[0] : body })
+      if (!response.ok) return res.status(502).json({ error: req.method === 'POST' ? 'Could not save this username. Please try again.' : 'Could not update this username.' })
+      if (req.method === 'PUT' && (!Array.isArray(body) || body.length === 0)) return res.status(404).json({ error: 'Inventory item not found.' })
+      return res.status(req.method === 'POST' ? 201 : 200).json({ item: Array.isArray(body) ? body[0] : body })
     }
-    const id = String((req.body as InventoryInput | undefined)?.id || '')
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'A valid inventory item ID is required.' })
-    const response = await fetch(`${endpoint}?id=eq.${encodeURIComponent(id)}&telegram_user_id=eq.${user.id}`, { method: 'PATCH', headers, body: JSON.stringify({ ...input, updated_at: new Date().toISOString() }) })
-    const body = await response.json().catch(() => null)
-    if (!response.ok) return res.status(502).json({ error: 'Could not update this username.' })
-    if (!Array.isArray(body) || body.length === 0) return res.status(404).json({ error: 'Inventory item not found.' })
-    return res.status(200).json({ item: body[0] })
+    return res.status(405).json({ error: 'Method not allowed' })
   } catch {
     return res.status(502).json({ error: 'Private inventory service is temporarily unavailable.' })
   }
