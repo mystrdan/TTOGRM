@@ -25,6 +25,8 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
 - MTProto username discovery and TON wallet connection are not implemented yet.
+- Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, and `/stats`.
+- The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
 
 ## Secrets and deployment
@@ -67,7 +69,7 @@ npm run dev
 
 ## Database foundation
 
-A private-first schema migration is staged at `supabase/migrations/202610120001_private_inventory.sql`. It defines username inventory and discovery-run tables, enables RLS, and revokes direct table access from browser-facing `anon` and `authenticated` roles. Trusted server-side functions must validate Telegram identity and scope every read/write to that verified Telegram user. This migration is not applied until a dedicated TTOGRM Supabase project is created.
+A private-first schema migration is staged at `supabase/migrations/202610120001_private_inventory.sql`. It defines username inventory and discovery-run tables, enables RLS, and revokes direct table access from browser-facing `anon` and `authenticated` roles. Trusted server-side functions must validate Telegram identity and scope every read/write to that verified Telegram user. The private inventory migration is applied to the dedicated TTOGRM Supabase project.
 
 ## Planned architecture
 
@@ -86,4 +88,4 @@ A private-first schema migration is staged at `supabase/migrations/202610120001_
 
 ## Supabase deployment
 
-The live Supabase project has its schema migration applied and the `telegram-auth` Edge Function deployed. See [`supabase/SETUP.md`](supabase/SETUP.md) for the project reference, endpoint, and safe secret setup steps. The Edge Function remains unconfigured until `TELEGRAM_BOT_TOKEN` is added as a Supabase secret.
+The live Supabase project has its private inventory and verified market-sales schema migrations applied, its market summary RPC created, and the `telegram-auth` Edge Function deployed. See [`supabase/SETUP.md`](supabase/SETUP.md) for the project reference, bot webhook commands, market-board architecture, and safe secret setup. Authentication remains unconfigured until `TELEGRAM_BOT_TOKEN` is added as a Supabase secret; the sales board remains unavailable until a trusted ingestion feed is configured.
