@@ -154,3 +154,14 @@ h1 span { color: var(--blue); }
   .market-metric { padding: 10px 7px; }
   .market-metric span, .market-metric small { font-size: 8px; }
 }
+
+
+.board-status.live { border-color: rgba(88,214,160,.2); color: #80deb0; }
+.board-status.live span { background: var(--green); }
+.market-sales-list { display: grid; gap: 7px; margin-top: 12px; }
+.market-sale-row { display: flex; align-items: center; gap: 9px; padding: 10px; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; background: rgba(7,14,20,.25); }
+.market-sale-row > div { display: flex; flex: 1; flex-direction: column; gap: 4px; min-width: 0; }
+.market-sale-row > div strong { overflow-wrap: anywhere; font-size: 11px; }
+.market-sale-row > div span { color: #718897; font-size: 9px; }
+.market-sale-row > strong { flex-shrink: 0; color: #a8dffb; font-size: 10px; }
+.market-sale-row a { display: grid; place-items: center; color: #8abfda; }
