@@ -23,6 +23,7 @@ interface Window {
   Telegram?: {
     WebApp: TelegramWebApp
   }
+  onTelegramAuth?: (user: TelegramLoginUser) => void
 }
 
 
@@ -34,10 +35,4 @@ type TelegramLoginUser = {
   photo_url?: string
   auth_date: number
   hash: string
-}
-
-declare global {
-  interface Window {
-    onTelegramAuth?: (user: TelegramLoginUser) => void
-  }
 }
