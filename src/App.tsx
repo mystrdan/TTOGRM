@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Check,
   CircleHelp,
+  ChartNoAxesCombined,
   Gem,
   Grid2X2,
   Layers3,
@@ -85,6 +86,7 @@ function App() {
   const [query, setQuery] = useState('')
   const [showWalletInfo, setShowWalletInfo] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
+  const [showBotHelp, setShowBotHelp] = useState(false)
   const [sortNewest, setSortNewest] = useState(false)
   const displayName = verifiedUser?.first_name || 'Your collection'
   const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
@@ -151,6 +153,24 @@ function App() {
         </article>
       </section>
 
+      <section className="market-board" aria-labelledby="market-board-title">
+        <div className="section-heading">
+          <div><div className="eyebrow"><ChartNoAxesCombined size={13} /> TELEGRAM USERNAME MARKET</div><h2 id="market-board-title">Market info board</h2></div>
+          <span className="board-status"><span /> Awaiting data</span>
+        </div>
+        <p className="board-intro">Public sales activity for Telegram collectible usernames. Figures will appear only when a reliable sales feed is connected.</p>
+        <div className="market-metrics">
+          <article className="market-metric"><span>Sold in 24h</span><strong>—</strong><small>Not yet available</small></article>
+          <article className="market-metric"><span>24h sales volume</span><strong>— TON</strong><small>Not yet available</small></article>
+          <article className="market-metric"><span>Top sale · 24h</span><strong>—</strong><small>Username and price pending</small></article>
+        </div>
+        <div className="market-board-bottom">
+          <div><strong>Recent sales &amp; top usernames</strong><span>No verified sale records loaded yet.</span></div>
+          <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Bot commands <ArrowUpRight size={15} /></button>
+        </div>
+        <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Marketplace data integration is a separate step.</p>
+      </section>
+
       <section className="collection-section">
         <div className="section-heading">
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
@@ -201,9 +221,29 @@ function App() {
 
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className="nav-item active"><Grid2X2 size={19} /><span>Collection</span></button>
+        <button className="nav-item" onClick={() => document.getElementById('market-board-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><ChartNoAxesCombined size={19} /><span>Market</span></button>
         <button className="nav-item" onClick={() => setShowWalletInfo(true)}><Wallet size={19} /><span>Wallet</span></button>
         <button className="nav-item" onClick={() => setShowAbout(true)}><Settings2 size={19} /><span>Settings</span></button>
       </nav>
+
+      {showBotHelp && <div className="modal-backdrop" role="presentation" onClick={() => setShowBotHelp(false)}>
+        <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="bot-title" onClick={(event) => event.stopPropagation()}>
+          <button className="modal-close" aria-label="Close" onClick={() => setShowBotHelp(false)}><X size={18} /></button>
+          <span className="modal-icon"><ChartNoAxesCombined size={24} /></span>
+          <h2 id="bot-title">TTOGRM bot commands</h2>
+          <p>Use these commands in the TTOGRM Telegram bot. Market commands will report when verified sales data is available.</p>
+          <div className="command-list">
+            <div><code>/start</code><span>Open TTOGRM and see the welcome menu</span></div>
+            <div><code>/help</code><span>List bot commands and how the service works</span></div>
+            <div><code>/board</code><span>Open the market information board</span></div>
+            <div><code>/sales</code><span>Check the last 24 hours of username sales</span></div>
+            <div><code>/top</code><span>View the highest-value reported username sale</span></div>
+            <div><code>/stats</code><span>Get the current market-data status</span></div>
+          </div>
+          <div className="modal-footnote"><ShieldCheck size={16} /> Commands are being wired up. Sales statistics stay unavailable until a trusted data feed is connected.</div>
+          <button className="primary-button" onClick={() => setShowBotHelp(false)}>Back to TTOGRM</button>
+        </section>
+      </div>}
 
       {showWalletInfo && <div className="modal-backdrop" role="presentation" onClick={() => setShowWalletInfo(false)}>
         <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="wallet-title" onClick={(event) => event.stopPropagation()}>
