@@ -36,11 +36,15 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 Function source: `supabase/functions/telegram-auth/index.ts`
 
 1. Link the Supabase CLI to the intended TTOGRM project.
-2. Set the token interactively or through a secure local environment, never by committing it:
-   ```bash
-   supabase secrets set TELEGRAM_BOT_TOKEN
+2. Store the token in a temporary local env file that is excluded by `.gitignore`, with one line in `KEY=value` format:
+   ```dotenv
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
    ```
-   Follow the CLI prompt for the value if offered by your installed version; otherwise use the Supabase dashboard's Edge Function secrets UI. Do not paste the secret into shell history or CI logs.
+   Then upload it using the Supabase CLI:
+   ```bash
+   supabase secrets set --env-file .env.local
+   ```
+   Keep `.env.local` out of Git, restrict local file permissions, and delete the file after the secret is uploaded. Never place the real token in a command argument, shell history, CI log, or committed file. You can also add the secret directly in the Supabase Dashboard's Edge Function secrets UI.
 3. Deploy the function:
    ```bash
    supabase functions deploy telegram-auth --no-verify-jwt
