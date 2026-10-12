@@ -41,6 +41,11 @@ const demoUsernames: Username[] = [
 
 const filters = ['All names', 'Personal', 'Groups', 'Channels', 'Collectibles'] as const
 type Filter = (typeof filters)[number]
+type Page = 'collection' | 'market' | 'wallet' | 'settings'
+function pageFromPath(path: string): Page {
+  const last = path.replace(/\/+$/, '').split('/').pop()
+  return last === 'market' || last === 'wallet' || last === 'settings' ? last : 'collection'
+}
 
 type MarketSale = { username: string; sale_price_gram: number | string | null; sold_at: string; source_url?: string | null }
 type MarketBoard = { available: boolean; soldCount: number; volumeGram: number | null; topSale: MarketSale | null; recentSales: MarketSale[]; updatedAt: string | null; reason?: string }
@@ -55,6 +60,7 @@ type VerifiedTelegramUser = {
 }
 
 function App() {
+  const [activePage, setActivePage] = useState<Page>(() => pageFromPath(window.location.pathname))
   const [verifiedUser, setVerifiedUser] = useState<VerifiedTelegramUser | null>(null)
   const botUsername = (import.meta.env.VITE_TELEGRAM_BOT_USERNAME || '').replace(/^@/, '')
   const walletAddress = useTonAddress()
@@ -62,6 +68,19 @@ function App() {
   const [authState, setAuthState] = useState<'preview' | 'checking' | 'verified' | 'failed'>('preview')
   const initData = window.Telegram?.WebApp?.initData ?? ''
   const authEndpoint = import.meta.env.VITE_TELEGRAM_AUTH_URL || '/api/auth'
+
+  useEffect(() => {
+    const handlePopState = () => setActivePage(pageFromPath(window.location.pathname))
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  const navigateTo = (page: Page) => {
+    const path = '/' + page
+    if (window.location.pathname !== path) window.history.pushState({ page }, '', path)
+    setActivePage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   useEffect(() => {
     if (initData) return
@@ -208,7 +227,7 @@ function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#home" aria-label="TTOGRM home">
+        <a className="brand" href="/collection" onClick={(event) => { event.preventDefault(); navigateTo("collection") }} aria-label="TTOGRM home">
           <span className="brand-mark"><Link2 size={20} strokeWidth={2.5} /></span>
           <span>TTOGRM</span>
         </a>
@@ -220,6 +239,7 @@ function App() {
         </div>
       </header>
 
+      {activePage === 'collection' && <>
       <section className="welcome" id="home">
         <div className="eyebrow"><span className="status-dot" /> YOUR TELEGRAM COLLECTION</div>
         <h1>Every name.<br /><span>One place.</span></h1>
@@ -262,7 +282,9 @@ function App() {
         </article>
       </section>
 
-      <section className="market-board" aria-labelledby="market-board-title">
+      </>}
+      {activePage === 'market' && <section className="page-intro"><div className="eyebrow"><ChartNoAxesCombined size={13} /> MARKET OVERVIEW</div><h1>Signals, not<br /><span>speculation.</span></h1><p>Verified Telegram collectible username sales only. Figures remain blank until trusted sales data is available.</p></section>}
+      {activePage === 'market' && <section className="market-board" aria-labelledby="market-board-title">
         <div className="section-heading">
           <div><div className="eyebrow"><ChartNoAxesCombined size={13} /> TELEGRAM USERNAME MARKET</div><h2 id="market-board-title">Market info board</h2></div>
           <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Feed connected' : 'No verified sales loaded') : 'Awaiting data'}</span>
@@ -287,7 +309,7 @@ function App() {
         <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Market data is currently {marketBoard?.available ? 'connected, but only ingested verified records are shown' : 'not connected'}.</p>
       </section>
 
-      <section className="collection-section">
+      {activePage === 'collection' && <><section className="collection-section">
         <div className="section-heading">
           <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
           <button className="icon-button" aria-label="Sort usernames" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
@@ -324,6 +346,8 @@ function App() {
         <p className="demo-note"><Sparkles size={14} /> Sample usernames shown for interface preview. Live discovery is not connected yet.</p>
       </section>
 
+      </>}
+      {activePage === 'wallet' && <><section className="page-intro"><div className="eyebrow"><Wallet size={13} /> WALLET &amp; CURRENCY</div><h1>Your wallet.<br /><span>Your keys.</span></h1><p>Connect a TON-compatible wallet when you choose. TTOGRM never asks for your seed phrase or private keys.</p></section>
       <section className="wallet-card">
         <div className="wallet-icon"><Wallet size={22} /></div>
         <div className="wallet-copy">
@@ -333,16 +357,20 @@ function App() {
         <TonConnectButton />
       </section>
 
+      <div className="wallet-details"><article><span className="wallet-detail-icon"><ShieldCheck size={18} /></span><div><strong>Wallet stays yours</strong><p>Connecting a wallet does not transfer ownership or give TTOGRM access to your keys.</p></div></article><article><span className="wallet-detail-icon"><Gem size={18} /></span><div><strong>Gram (GRAM)</strong><p>GRAM is the native currency. TON is the blockchain network.</p></div></article><article><span className="wallet-detail-icon"><LockKeyhole size={18} /></span><div><strong>No seed phrases</strong><p>Approve requests in your wallet app. Never enter recovery phrases into TTOGRM.</p></div></article></div>
+      </>}
+      {activePage === 'settings' && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Sample inventory is still used for preview; private database inventory is not connected yet.</p></div></div><span className="settings-status">Preview</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
+
       <footer className="footer">
         <span><LockKeyhole size={13} /> Private by default</span>
         <button onClick={() => setShowAbout(true)}>About TTOGRM <ArrowUpRight size={13} /></button>
       </footer>
 
       <nav className="bottom-nav" aria-label="Main navigation">
-        <button className="nav-item active"><Grid2X2 size={19} /><span>Collection</span></button>
-        <button className="nav-item" onClick={() => document.getElementById('market-board-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}><ChartNoAxesCombined size={19} /><span>Market</span></button>
-        <button className="nav-item" onClick={() => document.querySelector('.wallet-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}><Wallet size={19} /><span>Wallet</span></button>
-        <button className="nav-item" onClick={() => setShowAbout(true)}><Settings2 size={19} /><span>Settings</span></button>
+        <button className={activePage === 'collection' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'collection' ? 'page' : undefined} onClick={() => navigateTo('collection')}><Grid2X2 size={19} /><span>Collection</span></button>
+        <button className={activePage === 'market' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'market' ? 'page' : undefined} onClick={() => navigateTo('market')}><ChartNoAxesCombined size={19} /><span>Market</span></button>
+        <button className={activePage === 'wallet' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'wallet' ? 'page' : undefined} onClick={() => navigateTo('wallet')}><Wallet size={19} /><span>Wallet</span></button>
+        <button className={activePage === 'settings' ? 'nav-item active' : 'nav-item'} aria-current={activePage === 'settings' ? 'page' : undefined} onClick={() => navigateTo('settings')}><Settings2 size={19} /><span>Settings</span></button>
       </nav>
 
       {showBotHelp && <div className="modal-backdrop" role="presentation" onClick={() => setShowBotHelp(false)}>
