@@ -58,8 +58,11 @@ function sessionUser(req: VercelRequest): SessionPayload['user'] | null {
 
 function config() {
   const baseUrl = (process.env.SUPABASE_URL || 'https://eugovevzpptsfstkjcaf.supabase.co').replace(/\/$/, '')
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  return key ? { baseUrl, key } : null
+  // Prefer the current secret-key format. Legacy service_role JWTs still work during migration.
+  const secretKey = process.env.SUPABASE_SECRET_KEY
+  const legacyKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const key = secretKey || legacyKey
+  return key ? { baseUrl, key, isNewSecretKey: Boolean(secretKey) } : null
 }
 
 function validInput(body: InventoryInput) {
@@ -84,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cfg = config()
   if (!cfg) return res.status(503).json({ error: 'Private inventory storage is not configured yet.' })
   const endpoint = `${cfg.baseUrl}/rest/v1/username_entries`
-  const headers = { apikey: cfg.key, Authorization: `Bearer ${cfg.key}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }
+  const headers = { apikey: cfg.key, ...(!cfg.isNewSecretKey ? { Authorization: `Bearer ${cfg.key}` } : {}), 'Content-Type': 'application/json', Prefer: 'return=representation' }
 
   try {
     if (req.method === 'GET') {
