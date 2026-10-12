@@ -232,7 +232,7 @@ function App() {
           color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
         })))
       })
-      .catch((error) => { if (active) setInventoryError(error instanceof Error ? error.message : 'Could not load your inventory.') })
+      .catch((error) => { if (active) setInventoryError(error instanceof Error ? error.message : 'We couldn’t load your collection. Please try again.') })
       .finally(() => { if (active) setInventoryLoading(false) })
     return () => { active = false }
   }, [verifiedUser, initData])
@@ -265,7 +265,7 @@ function App() {
       setNewHandle('')
       setNewTitle('')
     } catch (error) {
-      setInventoryError(error instanceof Error ? error.message : 'Could not save this username.')
+      setInventoryError(error instanceof Error ? error.message : 'We couldn’t save this username. Please try again.')
     } finally { setSavingInventory(false) }
   }
 
@@ -292,7 +292,7 @@ function App() {
       const item = result.item as InventoryRecord
       setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified', note: item.title || 'Added manually · ownership not confirmed', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
       setEditingId(null)
-    } catch (error) { setInventoryError(error instanceof Error ? error.message : 'Could not update this username.') }
+    } catch (error) { setInventoryError(error instanceof Error ? error.message : 'We couldn’t update this username. Please try again.') }
     finally { setSavingInventory(false) }
   }
   const removeInventoryItem = async (item: Username) => {
@@ -391,7 +391,7 @@ function App() {
           <div className="profile-chip">
             <span className="profile-avatar">{displayName.slice(0, 1).toUpperCase()}</span>
             <span className="profile-copy"><strong>{displayName}</strong><small>{username}</small></span>
-            <span className="connection-pill connected"><span />Identity verified</span>
+            <span className="connection-pill connected"><span />Telegram signed in</span>
           </div>
         </> : <>
           <div className="eyebrow"><span className="status-dot" /> YOUR TELEGRAM USERNAMES</div>
@@ -403,7 +403,7 @@ function App() {
             <span><ChartNoAxesCombined size={15} /> Verified market signals</span>
           </div>
           {initData && authState === 'checking' && <p className="auth-pending">Verifying your Telegram identity…</p>}
-          {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please reopen the Mini App or try signing in again.</p>}
+          {authState === 'failed' && <p className="auth-error">We couldn’t confirm your Telegram account. Please reopen TTOGRM in Telegram or try again.</p>}
         </>}
       </section>
 
@@ -417,7 +417,7 @@ function App() {
           ? <div id="telegram-login-container" className="telegram-login-container" />
           : <p className="setup-hint">Browser sign-in is temporarily unavailable. Please open TTOGRM from Telegram to continue.</p>}
         {authState === 'verified' && <button className="sign-out-button" onClick={() => void signOut()}>Sign out</button>}
-        {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please try again.</p>}
+        {authState === 'failed' && <p className="auth-error">We couldn’t sign you in with Telegram. Please try again.</p>}
       </section>}
 
       {verifiedUser && <section className="stats-grid" aria-label="Collection overview">
@@ -566,7 +566,7 @@ function App() {
             <div><code>/board</code><span>Open the market information board</span></div>
             <div><code>/sales</code><span>Check the last 24 hours of username sales</span></div>
             <div><code>/top</code><span>View the highest-value reported username sale</span></div>
-            <div><code>/stats</code><span>Get the current market-data status</span></div>
+            <div><code>/stats</code><span>Check whether sales information is available</span></div>
             <div><code>/currency</code><span>Explain Gram (GRAM) and the TON blockchain</span></div>
           </div>
           <div className="modal-footnote"><ShieldCheck size={16} /> Sales information will appear when confirmed sale records are available.</div>
@@ -580,7 +580,7 @@ function App() {
           <span className="modal-icon"><Link2 size={24} /></span>
           <h2 id="about-title">TTOGRM</h2>
           <p>Every Telegram name. One place. A private collection for usernames on personal profiles, groups and channels — including basic and collectible usernames.</p>
-          <div className="modal-footnote"><ShieldCheck size={16} /> You can add usernames manually. Automatic discovery is not available yet, and saving a name here doesn’t confirm ownership.</div>
+          <div className="modal-footnote"><ShieldCheck size={16} /> You can add usernames manually. TTOGRM can’t find usernames automatically yet. Saving a name here doesn’t confirm ownership.</div>
           <button className="primary-button" onClick={() => setShowAbout(false)}>Back to collection</button>
         </section>
       </div>}
