@@ -6,7 +6,9 @@ TTOGRM is a Telegram-native username portfolio concept for organizing usernames 
 
 ## MVP scope
 
-- Telegram Mini App interface.
+- Responsive browser + Telegram Mini App interface.
+- Telegram Login Widget sign-in for regular browsers and desktop, with server-side hash verification.
+- TON Connect wallet UI for browser, desktop, and Telegram-compatible wallet flows.
 - Username inventory organized by personal profile, groups, and channels.
 - Clear distinction between basic usernames, collectible usernames, assignment, and verified wallet ownership.
 - Optional wallet connection on the TON blockchain; Gram (GRAM) is its native currency.
@@ -24,7 +26,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
-- MTProto username discovery and wallet connection on the TON blockchain are not implemented yet.
+- MTProto username discovery is not implemented yet. TON Connect UI is now wired into the app; wallet connection still needs end-to-end browser testing.
 - Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, `/currency`, and `/inventory`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
@@ -40,7 +42,7 @@ Repository: https://github.com/mystrdan/TTOGRM
 Vercel project: https://vercel.com/capsicom/ttogrm  
 Production alias: https://ttogrm-capsicom.vercel.app
 
-The project is linked to GitHub. Pushes to `main` are intended to deploy to production automatically; other branches can be used for previews.
+The project is linked to GitHub. Pushes to `main` are intended to deploy to production automatically; other branches can be used for previews. Browser Telegram login also requires `VITE_TELEGRAM_BOT_USERNAME` (the bot username without `@`) and linking the production domain to that bot in BotFather with `/setdomain`.
 
 Set the following variables in **Vercel → Project → Settings → Environment Variables** as needed. Secrets must be server-side only and must not use the `VITE_` prefix:
 
@@ -49,6 +51,7 @@ Set the following variables in **Vercel → Project → Settings → Environment
 - `SUPABASE_URL` — `https://eugovevzpptsfstkjcaf.supabase.co`.
 - `SUPABASE_SERVICE_ROLE_KEY` — required by the market API; server-side only.
 - `VITE_TELEGRAM_AUTH_URL` — optional public endpoint URL if the frontend should use the Supabase Edge Function at `https://eugovevzpptsfstkjcaf.supabase.co/functions/v1/telegram-auth`.
+- `VITE_TELEGRAM_BOT_USERNAME` — public bot username without `@`, required for Telegram Login Widget on normal browsers. Link the production domain to the same bot using BotFather `/setdomain`.
 
 After setting or changing environment variables, redeploy the relevant Vercel environment so the new values are loaded.
 
@@ -115,6 +118,7 @@ A private-first schema migration is staged at `supabase/migrations/202610120001_
 
 - [Telegram Mini Apps](https://core.telegram.org/bots/webapps)
 - [Telegram Mini App init data validation](https://docs.telegram-mini-apps.com/platform/init-data)
+- [Telegram Login Widget](https://core.telegram.org/widgets/login/)
 - [TON Connect overview](https://docs.ton.org/applications/ton-connect/overview)
 - [Supabase Edge Function secrets](https://supabase.com/docs/guides/functions/secrets)
 
