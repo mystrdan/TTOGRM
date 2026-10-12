@@ -18,8 +18,8 @@ The TTOGRM Supabase project is provisioned on the Free plan in `eu-west-2` (Lond
 The repository `mystrdan/TTOGRM` is linked to the Vercel project `ttogrm`, with `main` as the production branch.
 
 - Project dashboard: https://vercel.com/capsicom/ttogrm
-- Default domain: https://ttogrm.vercel.app
-- Telegram webhook endpoint: https://ttogrm.vercel.app/api/telegram-webhook
+- Production alias: https://ttogrm-capsicom.vercel.app
+- Telegram webhook endpoint: https://ttogrm-capsicom.vercel.app/api/telegram-webhook
 
 Vercel Git integration is enabled so pushes to `main` can trigger production deployments automatically. Check the project dashboard for current build status and deployment URLs.
 
