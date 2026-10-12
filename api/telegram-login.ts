@@ -49,14 +49,20 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Telegram login signature could not be verified' })
   }
 
-  return res.status(200).json({
-    authenticated: true,
-    user: {
+  const sessionUser = {
       id: user.id,
       first_name: user.first_name,
       ...(user.last_name ? { last_name: user.last_name } : {}),
       ...(user.username ? { username: user.username } : {}),
       ...(user.photo_url ? { photo_url: user.photo_url } : {}),
-    },
+    }
+  const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
+  const payload = Buffer.from(JSON.stringify({ user: sessionUser, exp: expiresAt })).toString('base64url')
+  const signature = createHmac('sha256', botToken).update(payload).digest('hex')
+  res.setHeader('Set-Cookie', `ttogrm_session=${payload}.${signature}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`)
+
+  return res.status(200).json({
+    authenticated: true,
+    user: sessionUser
   })
 }
