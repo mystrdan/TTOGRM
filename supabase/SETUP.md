@@ -8,7 +8,7 @@ The TTOGRM Supabase project is provisioned on the Free plan in `eu-west-2` (Lond
 
 ## Current state
 
-- The private inventory migration and verified market-sales migrations are applied, including the Gram currency naming migration (`202610120004_gram_currency_naming.sql`).
+- The private inventory and verified market-sales migrations are applied, including Gram currency naming (`202610120004_gram_currency_naming.sql`) and case-insensitive per-account username uniqueness (`202610120005_username_uniqueness.sql`).
 - The `telegram-auth` Edge Function is deployed.
 - Browser roles cannot directly read or write the private inventory tables. Access is reserved for trusted server-side code.
 - The function will return HTTP 503 until `TELEGRAM_BOT_TOKEN` is added as an Edge Function secret.
@@ -96,7 +96,7 @@ The Vercel webhook handler is at `api/telegram-webhook.ts`. Configure these as s
 - `TELEGRAM_BOT_TOKEN`: the bot token, shared only by server-side handlers.
 - `TELEGRAM_WEBHOOK_SECRET`: a random secret string used to authenticate Telegram webhook requests.
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
-- `SUPABASE_SERVICE_ROLE_KEY`: the project service-role secret, server-side only. Never use it in the frontend or commit it.
+- `SUPABASE_SECRET_KEY`: preferred current server-only Supabase secret API key (`sb_secret_...`). `SUPABASE_SERVICE_ROLE_KEY` is supported only as a legacy fallback. Never use either key in frontend code or commit it.
 
 After deployment, set the webhook to `https://ttogrm-capsicom.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
 
@@ -118,5 +118,5 @@ inventory - Explain inventory discovery and demo data
 - `market_sales` stores sale observations with a source, timestamp, price when known, and verification status. Price is stored in `sale_price_gram`; market prices and volume are denominated in Gram (GRAM), while TON is the blockchain name.
 - The `get_public_market_board()` database function aggregates only verified records in the rolling 24-hour window.
 - `GET /api/market-board` and the bot's `/board`, `/sales`, `/top`, and `/stats` commands use the same aggregate.
-- The board intentionally shows unavailable values until `SUPABASE_SERVICE_ROLE_KEY` is configured and a trusted market ingestion feed supplies verified sales. A missing data feed is not interpreted as zero market activity.
+- The board intentionally shows unavailable values until `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`) is configured and a trusted market ingestion feed supplies verified sales. A missing data feed is not interpreted as zero market activity.
 - No automated Fragment sales ingestion has been implemented yet; do not manually mark unverified reports as verified without evidence.
