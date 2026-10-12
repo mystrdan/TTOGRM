@@ -7,7 +7,7 @@ TTOGRM is a Telegram-native username portfolio concept for organizing usernames 
 ## MVP scope
 
 - Responsive browser + Telegram Mini App interface.
-- Telegram Login Widget sign-in for regular browsers and desktop, with server-side hash verification.
+- Telegram Login Widget sign-in for regular browsers and desktop, with server-side hash verification and a signed, HttpOnly seven-day session cookie.
 - TON Connect wallet UI for browser, desktop, and Telegram-compatible wallet flows.
 - Username inventory organized by personal profile, groups, and channels.
 - Clear distinction between basic usernames, collectible usernames, assignment, and verified wallet ownership.
@@ -25,7 +25,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - React + TypeScript Mini App interface is in place.
 - Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
-- The dashboard still uses clearly labelled demo inventory data.
+- The dashboard still uses clearly labelled demo inventory data. Browser login now persists the verified identity in a signed, HttpOnly cookie for up to seven days, with a session-check endpoint and sign-out action; this session is not yet wired to private database inventory access.
 - MTProto username discovery is not implemented yet. TON Connect UI is now wired into the app; wallet connection still needs end-to-end browser testing.
 - Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, `/currency`, and `/inventory`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
