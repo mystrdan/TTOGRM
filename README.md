@@ -20,7 +20,15 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 
 ## Current status
 
-This repository starts with the interface scaffold. The dashboard currently uses clearly labelled demo data; it is not yet connected to a Telegram account, MTProto discovery, or TON wallet.
+- React + TypeScript Mini App interface is in place.
+- `POST /api/auth` validates Telegram Mini App initialization data server-side using the bot token, checks expiry, and returns a minimal verified user profile.
+- The dashboard still uses clearly labelled demo inventory data.
+- MTProto username discovery and TON wallet connection are not implemented yet.
+- A GitHub Actions workflow runs the production build on pushes and pull requests.
+
+### Required environment
+
+Configure `TELEGRAM_BOT_TOKEN` as a server-side environment variable in the deployment platform before expecting Telegram identity verification to succeed. Never expose this token to frontend code or commit it to the repository. Without the variable, the auth endpoint intentionally returns a configuration error.
 
 ## Development
 
