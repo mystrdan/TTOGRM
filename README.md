@@ -50,7 +50,7 @@ Set the following variables in **Vercel → Project → Settings → Environment
 - `TELEGRAM_BOT_TOKEN` — required by `/api/auth` and the bot webhook.
 - `TELEGRAM_WEBHOOK_SECRET` — required to validate incoming Telegram webhook requests.
 - `SUPABASE_URL` — `https://eugovevzpptsfstkjcaf.supabase.co`.
-- `SUPABASE_SERVICE_ROLE_KEY` — required by the market API; server-side only.
+- `SUPABASE_SECRET_KEY` — preferred current server-side Supabase secret API key (`sb_secret_...`); the legacy `SUPABASE_SERVICE_ROLE_KEY` is a fallback only.
 - `VITE_TELEGRAM_AUTH_URL` — optional public endpoint URL if the frontend should use the Supabase Edge Function at `https://eugovevzpptsfstkjcaf.supabase.co/functions/v1/telegram-auth`.
 - `VITE_TELEGRAM_BOT_USERNAME` — public bot username without `@`, required for Telegram Login Widget on normal browsers. Link the production domain to the same bot using BotFather `/setdomain`.
 
@@ -105,7 +105,7 @@ npm run dev
 
 ## Database foundation
 
-A private-first schema migration is staged at `supabase/migrations/202610120001_private_inventory.sql`. It defines username inventory and discovery-run tables, enables RLS, and revokes direct table access from browser-facing `anon` and `authenticated` roles. Trusted server-side functions must validate Telegram identity and scope every read/write to that verified Telegram user. The private inventory migration is applied to the dedicated TTOGRM Supabase project.
+A private-first schema migration is staged at `supabase/migrations/202610120001_private_inventory.sql`. It defines username inventory and discovery-run tables, enables RLS, and revokes direct table access from browser-facing `anon` and `authenticated` roles. Trusted server-side functions must validate Telegram identity and scope every read/write to that verified Telegram user. The private inventory migration is applied to the dedicated TTOGRM Supabase project. Case-insensitive uniqueness is enforced per Telegram account at both API and database levels, regardless of the record's entity category.
 
 ## Planned architecture
 
@@ -125,4 +125,4 @@ A private-first schema migration is staged at `supabase/migrations/202610120001_
 
 ## Supabase deployment
 
-The live Supabase project has its private inventory and market-sales migrations applied, including `202610120004_gram_currency_naming.sql`, which renames the market price field to `sale_price_gram` and updates the summary RPC to return `volumeGram`. The `telegram-auth` Edge Function is deployed. See [`supabase/SETUP.md`](supabase/SETUP.md) for the project reference, bot webhook commands, market-board architecture, and safe secret setup. Confirm that the rotated `TELEGRAM_BOT_TOKEN` is configured as a Supabase secret before relying on authentication; the sales board remains unavailable until a trusted ingestion feed is configured.
+The live Supabase project has its private inventory and market-sales migrations applied, including `202610120004_gram_currency_naming.sql`, which renames the market price field to `sale_price_gram` and updates the summary RPC to return `volumeGram`, and `202610120005_username_uniqueness.sql`, which enforces case-insensitive username uniqueness per Telegram account. The `telegram-auth` Edge Function is deployed. See [`supabase/SETUP.md`](supabase/SETUP.md) for the project reference, bot webhook commands, market-board architecture, and safe secret setup. Confirm that the rotated `TELEGRAM_BOT_TOKEN` is configured as a Supabase secret before relying on authentication; the sales board remains unavailable until a trusted ingestion feed is configured.
