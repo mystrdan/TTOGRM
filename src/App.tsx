@@ -483,7 +483,7 @@ function App() {
                 </>}
               </div>
               {editingId !== item.id && <div className="inventory-row-actions"><button className="row-arrow" aria-label={`Edit ${item.handle}`} onClick={() => beginEdit(item)} title="Edit username"><Pencil size={16} /></button><button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button></div>}
-            </article>  </article>
+            </article>
           ))}
           {filtered.length === 0 && <div className="empty-state"><Search size={22} /><strong>No usernames found</strong><span>Try a different search or category.</span></div>}
         </div>
