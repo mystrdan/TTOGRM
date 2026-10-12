@@ -307,7 +307,7 @@ function App() {
       if (!response.ok) throw new Error(result.error || 'We couldn’t remove this username. Please try again.')
       setInventory((current) => current.filter((entry) => entry.id !== item.id))
     } catch (error) {
-      setInventoryError(error instanceof Error ? error.message : 'Could not remove this username.')
+      setInventoryError(error instanceof Error ? error.message : 'We couldn’t remove this username. Please try again.')
     }
   }
 
@@ -411,7 +411,7 @@ function App() {
         <div className="browser-auth-copy">
           <span className="eyebrow">BROWSER SIGN-IN</span>
           <h2>{authState === 'verified' ? 'Telegram connected' : 'Continue with Telegram'}</h2>
-          <p>{authState === 'verified' ? 'Your Telegram identity has been verified for this browser session.' : 'Open TTOGRM from any browser or desktop. Sign in with Telegram, then connect your TON wallet independently.'}</p>
+          <p>{authState === 'verified' ? 'You’re signed in with Telegram on this browser.' : 'Open TTOGRM from any browser or desktop. Sign in with Telegram, then connect your TON wallet independently.'}</p>
         </div>
         {botUsername
           ? <div id="telegram-login-container" className="telegram-login-container" />
@@ -447,8 +447,8 @@ function App() {
         </div>
         <p className="board-intro">Recent public sales of Telegram collectible usernames over the last 24 hours. Only confirmed sales are included. {marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Confirmed sales are available below.' : 'There are no confirmed sales to show yet.') : 'Sales information is not available yet.'}</p>
         <div className="market-metrics">
-          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Verified sale records' : 'No verified records in the current window') : 'Sales data not available yet'}</small></article>
-          <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeGram !== null ? formatGram(marketBoard.volumeGram) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Verified sale records' : 'No confirmed sales in this period') : 'Sales data not available yet'}</small></article>
+          <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeGram !== null ? formatGram(marketBoard.volumeGram) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'No confirmed prices yet'}</small></article>
           <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatGram(marketBoard.topSale.sale_price_gram) : 'No verified top sale yet'}</small></article>
         </div>
         <div className="market-board-bottom">
