@@ -32,7 +32,7 @@ function validateInitData(raw: string, botToken: string) {
 
   const checkString = [...params.entries()]
     .filter(([key]) => key !== 'hash')
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, value]) => `${key}=${value}`)
     .join('\n')
 
