@@ -271,6 +271,7 @@ function App() {
             <div><code>/sales</code><span>Check the last 24 hours of username sales</span></div>
             <div><code>/top</code><span>View the highest-value reported username sale</span></div>
             <div><code>/stats</code><span>Get the current market-data status</span></div>
+            <div><code>/currency</code><span>Explain Gram (GRAM) and the TON blockchain</span></div>
           </div>
           <div className="modal-footnote"><ShieldCheck size={16} /> Commands are being wired up. Sales statistics stay unavailable until a trusted data feed is connected.</div>
           <button className="primary-button" onClick={() => setShowBotHelp(false)}>Back to TTOGRM</button>
