@@ -40,7 +40,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const checkString = Object.entries(user)
     .filter(([key, value]) => key !== 'hash' && value !== undefined && value !== null)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([key, value]) => `${key}=${String(value)}`)
     .join('\n')
   const secretKey = createHash('sha256').update(botToken).digest()
