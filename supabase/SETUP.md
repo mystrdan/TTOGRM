@@ -92,6 +92,7 @@ sales - Check reported sales in the last 24 hours
 top - View the highest reported username sale
 stats - Check market data status
 currency - Explain Gram (GRAM) and the TON blockchain
+inventory - Explain inventory discovery and demo data
 ```
 
 ## Market information board
