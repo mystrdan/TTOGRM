@@ -83,3 +83,7 @@ A private-first schema migration is staged at `supabase/migrations/202610120001_
 - [Telegram Mini App init data validation](https://docs.telegram-mini-apps.com/platform/init-data)
 - [TON Connect overview](https://docs.ton.org/applications/ton-connect/overview)
 - [Supabase Edge Function secrets](https://supabase.com/docs/guides/functions/secrets)
+
+## Supabase deployment
+
+The live Supabase project has its schema migration applied and the `telegram-auth` Edge Function deployed. See [`supabase/SETUP.md`](supabase/SETUP.md) for the project reference, endpoint, and safe secret setup steps. The Edge Function remains unconfigured until `TELEGRAM_BOT_TOKEN` is added as a Supabase secret.
