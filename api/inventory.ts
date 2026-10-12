@@ -80,12 +80,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Vary', 'Cookie')
   if (!['GET', 'POST', 'PUT', 'DELETE'].includes(req.method || '')) {
     res.setHeader('Allow', 'GET, POST, PUT, DELETE')
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ error: 'This action isn’t available.' })
   }
   const user = sessionUser(req)
   if (!user) return res.status(401).json({ error: 'Sign in with Telegram to access your private inventory.' })
   const cfg = config()
-  if (!cfg) return res.status(503).json({ error: 'Private inventory storage is not configured yet.' })
+  if (!cfg) return res.status(503).json({ error: 'Your collection is temporarily unavailable. Please try again later.' })
   const endpoint = `${cfg.baseUrl}/rest/v1/username_entries`
   const headers = { apikey: cfg.key, ...(!cfg.isNewSecretKey ? { Authorization: `Bearer ${cfg.key}` } : {}), 'Content-Type': 'application/json', Prefer: 'return=representation' }
 
@@ -97,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     if (req.method === 'DELETE') {
       const id = String(req.query.id || '')
-      if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'A valid inventory item ID is required.' })
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'That saved username could not be found. Please refresh and try again.' })
       const response = await fetch(`${endpoint}?id=eq.${encodeURIComponent(id)}&telegram_user_id=eq.${user.id}`, { method: 'DELETE', headers })
       if (!response.ok) return res.status(502).json({ error: 'Could not remove that username.' })
       return res.status(200).json({ deleted: true })
@@ -111,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // are valid Telegram username characters but are wildcards in LIKE/ILIKE filters.
       const duplicateUrl = `${endpoint}?select=id,username&telegram_user_id=eq.${user.id}`
       const duplicateResponse = await fetch(duplicateUrl, { headers, cache: 'no-store' })
-      if (!duplicateResponse.ok) return res.status(502).json({ error: 'Could not validate duplicate usernames.' })
+      if (!duplicateResponse.ok) return res.status(502).json({ error: 'We couldn’t check whether this username is already saved. Please try again.' })
       const duplicateRows = await duplicateResponse.json() as Array<{ id: string; username: string }>
       if (duplicateRows.some((row) => row.id !== editingId && row.username.toLowerCase() === input.username.toLowerCase())) {
         return res.status(409).json({ error: 'That username is already in your collection.' })
@@ -131,6 +131,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     return res.status(405).json({ error: 'Method not allowed' })
   } catch {
-    return res.status(502).json({ error: 'Private inventory service is temporarily unavailable.' })
+    return res.status(502).json({ error: 'Your collection is temporarily unavailable. Please try again later.' })
   }
 }
