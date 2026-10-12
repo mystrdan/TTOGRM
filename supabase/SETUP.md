@@ -30,6 +30,9 @@ In **Vercel → Project → Settings → Environment Variables**, configure the 
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
 - `SUPABASE_SERVICE_ROLE_KEY`: needed for the server-side market-board API. Never expose this in frontend code.
 - `VITE_TELEGRAM_AUTH_URL`: optional public endpoint URL for the Supabase auth function, if the frontend should call it instead of `/api/auth`.
+- `VITE_TELEGRAM_BOT_USERNAME`: the bot username without `@`, required for Telegram Login Widget sign-in on desktop and regular browsers.
+
+For browser login, also link the production domain to your bot through BotFather `/setdomain`. The Telegram Login Widget callback is verified server-side by `POST /api/telegram-login`; it does not authorize private inventory reads by itself.
 
 Do not create a `VITE_TELEGRAM_BOT_TOKEN` or `VITE_SUPABASE_SERVICE_ROLE_KEY`. Vite-prefixed variables are exposed to browser code. After changing environment variables, trigger a fresh deployment for the target environment.
 
@@ -69,7 +72,7 @@ JWT verification is disabled at the gateway only because this endpoint performs 
 
 Telegram Mini App `initData` verifies the Telegram account that opened TTOGRM. It does not provide a complete list of groups/channels or all usernames connected to that account. Full inventory discovery remains separate work and may require an explicit, consent-based Telegram client authorization flow. Never request a Telegram login code, password, or session string inside the Mini App.
 
-Wallet connection is planned as an optional TON-blockchain-only feature. Gram (GRAM) is the network's native currency; TON remains the blockchain name. A wallet address by itself does not prove ownership of every Telegram collectible username.
+TON Connect UI is mounted for browser, desktop, and compatible Telegram Mini App wallet flows. The public manifest is at `https://ttogrm-capsicom.vercel.app/tonconnect-manifest.json`. Wallet connection is optional and does not itself authenticate a Telegram account. Gram (GRAM) is the network's native currency; TON remains the blockchain name. A wallet address by itself does not prove ownership of every Telegram collectible username.
 
 ## Telegram bot commands and webhook
 
@@ -80,7 +83,7 @@ The Vercel webhook handler is at `api/telegram-webhook.ts`. Configure these as s
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
 - `SUPABASE_SERVICE_ROLE_KEY`: the project service-role secret, server-side only. Never use it in the frontend or commit it.
 
-After deployment, set the webhook to `https://ttogrm.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
+After deployment, set the webhook to `https://ttogrm-capsicom.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
 
 Register these commands with BotFather using `/setcommands`:
 
