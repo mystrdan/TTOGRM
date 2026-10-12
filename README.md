@@ -25,7 +25,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
 - MTProto username discovery and wallet connection on the TON blockchain are not implemented yet.
-- Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, and `/currency`, and `/inventory`.
+- Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, `/currency`, and `/inventory`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
 - Vercel project `ttogrm` is connected to this repository with `main` as its production branch. Project: https://vercel.com/capsicom/ttogrm. The first deployment was initiated; check the Vercel dashboard for its current build status.
@@ -38,7 +38,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 
 Repository: https://github.com/mystrdan/TTOGRM  
 Vercel project: https://vercel.com/capsicom/ttogrm  
-Default domain: https://ttogrm.vercel.app
+Production alias: https://ttogrm-capsicom.vercel.app
 
 The project is linked to GitHub. Pushes to `main` are intended to deploy to production automatically; other branches can be used for previews.
 
@@ -75,7 +75,7 @@ Function source: `supabase/functions/telegram-auth/index.ts`
 
 ### Telegram webhook
 
-Configure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as server-side Vercel environment variables. After deployment, set the Telegram webhook to `https://ttogrm.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
+Configure `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as server-side Vercel environment variables. After deployment, set the Telegram webhook to `https://ttogrm-capsicom.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
 
 Register commands with BotFather using `/setcommands`:
 
