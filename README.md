@@ -12,7 +12,7 @@ TTOGRM is a Telegram-native username portfolio concept for organizing usernames 
 - Username inventory organized by personal profile, groups, and channels.
 - Clear distinction between basic usernames, collectible usernames, assignment, and verified wallet ownership.
 - Optional wallet connection on the TON blockchain; Gram (GRAM) is its native currency.
-- Private-by-default collection view.
+- Private-by-default collection view with manual add/remove and server-side account scoping.
 
 ## Important discovery limitation
 
@@ -25,8 +25,8 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - React + TypeScript Mini App interface is in place, with dedicated `/collection`, `/market`, `/wallet`, and `/settings` page URLs and browser back/forward navigation.
 - Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
-- The signed-in dashboard still uses clearly labelled demo inventory data; it does not yet load or save private account inventory. Browser login now persists the verified identity in a signed, HttpOnly cookie for up to seven days, with a session-check endpoint and sign-out action; this session is not yet wired to private database inventory access.
-- MTProto username discovery is not implemented yet. TON Connect UI is now wired into the app; wallet connection still needs end-to-end browser testing.
+- The authenticated dashboard now loads private username entries from `public.username_entries` through `GET /api/inventory`, and supports manually adding and removing records. The API accepts either a signed, HttpOnly browser session cookie or freshly validated Telegram Mini App `initData`, then scopes every read/write/delete to that verified Telegram user ID. The dashboard no longer presents sample usernames as if they were the user's own inventory.
+- MTProto username discovery is not implemented yet. Manually entered records are not proof of ownership. TON Connect UI is wired into the app; wallet connection still needs end-to-end browser testing.
 - Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, `/currency`, and `/inventory`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
