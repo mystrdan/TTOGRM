@@ -9,7 +9,7 @@ TTOGRM is a Telegram-native username portfolio concept for organizing usernames 
 - Telegram Mini App interface.
 - Username inventory organized by personal profile, groups, and channels.
 - Clear distinction between basic usernames, collectible usernames, assignment, and verified wallet ownership.
-- Optional TON wallet connection.
+- Optional wallet connection on the TON blockchain; Gram (GRAM) is its native currency.
 - Private-by-default collection view.
 
 ## Important discovery limitation
@@ -24,7 +24,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
-- MTProto username discovery and TON wallet connection are not implemented yet.
+- MTProto username discovery and wallet connection on the TON blockchain are not implemented yet.
 - Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, and `/stats`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
@@ -76,7 +76,7 @@ A private-first schema migration is staged at `supabase/migrations/202610120001_
 - **Frontend:** React + TypeScript + Vite, designed to run inside Telegram.
 - **Telegram identity:** validate signed Telegram Mini App `initData` on a trusted server before treating the Telegram user ID as authenticated.
 - **Username discovery:** investigate a secure, explicit MTProto authorization service and document visibility limitations.
-- **TON:** optional TON Connect integration, used only to identify assets held by the connected wallet. A wallet address alone does not prove that every Telegram username belongs to that user.
+- **TON / Gram:** optional TON Connect integration for wallet access on the TON blockchain. Gram (GRAM) is the native currency; TON refers to the blockchain/network, not the current currency ticker. A wallet address alone does not prove that every Telegram username belongs to that user.
 - **Security:** secrets stay server-side; never trust `initDataUnsafe`; validate signed Mini App initialization data on the server.
 
 ## Official references
