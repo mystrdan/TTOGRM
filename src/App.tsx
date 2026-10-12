@@ -41,6 +41,9 @@ const demoUsernames: Username[] = [
 const filters = ['All names', 'Personal', 'Groups', 'Channels', 'Collectibles'] as const
 type Filter = (typeof filters)[number]
 
+type MarketSale = { username: string; sale_price_ton: number | string | null; sold_at: string; source_url?: string | null }
+type MarketBoard = { available: boolean; soldCount: number; volumeTon: number | null; topSale: MarketSale | null; recentSales: MarketSale[]; updatedAt: string | null; reason?: string }
+
 type VerifiedTelegramUser = {
   id: number
   first_name: string
@@ -88,6 +91,28 @@ function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [showBotHelp, setShowBotHelp] = useState(false)
   const [sortNewest, setSortNewest] = useState(false)
+  const [marketBoard, setMarketBoard] = useState<MarketBoard | null>(null)
+  const [marketLoading, setMarketLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+    fetch('/api/market-board', { cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok && !data) throw new Error('Market board unavailable')
+        return data as MarketBoard
+      })
+      .then((data) => { if (active) setMarketBoard(data) })
+      .catch(() => { if (active) setMarketBoard(null) })
+      .finally(() => { if (active) setMarketLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const formatTon = (value: number | string | null | undefined) => {
+    if (value === null || value === undefined || value === '') return 'Price undisclosed'
+    const number = Number(value)
+    return Number.isFinite(number) ? `${number.toLocaleString(undefined, { maximumFractionDigits: 3 })} TON` : 'Price undisclosed'
+  }
   const displayName = verifiedUser?.first_name || 'Your collection'
   const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
 
@@ -156,19 +181,26 @@ function App() {
       <section className="market-board" aria-labelledby="market-board-title">
         <div className="section-heading">
           <div><div className="eyebrow"><ChartNoAxesCombined size={13} /> TELEGRAM USERNAME MARKET</div><h2 id="market-board-title">Market info board</h2></div>
-          <span className="board-status"><span /> Awaiting data</span>
+          <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? 'Feed connected' : 'Awaiting data'}</span>
         </div>
-        <p className="board-intro">Public sales activity for Telegram collectible usernames. Figures will appear only when a reliable sales feed is connected.</p>
+        <p className="board-intro">Public sales activity for Telegram collectible usernames over the rolling 24-hour window. Only verified records are counted; current feed status: {marketBoard?.available ? 'connected' : 'not connected'}.</p>
         <div className="market-metrics">
-          <article className="market-metric"><span>Sold in 24h</span><strong>—</strong><small>Not yet available</small></article>
-          <article className="market-metric"><span>24h sales volume</span><strong>— TON</strong><small>Not yet available</small></article>
-          <article className="market-metric"><span>Top sale · 24h</span><strong>—</strong><small>Username and price pending</small></article>
+          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? 'Verified sale records' : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeTon !== null ? formatTon(marketBoard.volumeTon) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatTon(marketBoard.topSale.sale_price_ton) : 'No verified top sale yet'}</small></article>
         </div>
         <div className="market-board-bottom">
-          <div><strong>Recent sales &amp; top usernames</strong><span>No verified sale records loaded yet.</span></div>
+          <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest verified records` : marketBoard?.reason || 'No verified sale records loaded yet.'}</span></div>
           <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Bot commands <ArrowUpRight size={15} /></button>
         </div>
-        <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Marketplace data integration is a separate step.</p>
+        {marketBoard?.available && marketBoard.recentSales.length > 0 && <div className="market-sales-list">
+          {marketBoard.recentSales.map((sale, index) => <div className="market-sale-row" key={`${sale.username}-${sale.sold_at}-${index}`}>
+            <div><strong>@{sale.username}</strong><span>{new Date(sale.sold_at).toLocaleString()}</span></div>
+            <strong>{formatTon(sale.sale_price_ton)}</strong>
+            {sale.source_url && <a href={sale.source_url} target="_blank" rel="noreferrer" aria-label={`Open sale source for ${sale.username}`}><ArrowUpRight size={14} /></a>}
+          </div>)}
+        </div>}
+        <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Market data is currently {marketBoard?.available ? 'connected, but only ingested verified records are shown' : 'not connected'}.</p>
       </section>
 
       <section className="collection-section">
