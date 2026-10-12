@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { timingSafeEqual } from 'node:crypto'
+import { loadMarketBoard, type MarketBoard } from './_market'
 
 type TelegramMessage = {
   message_id: number
@@ -35,20 +36,31 @@ function commandOf(text: string) {
   return first.split('@', 1)[0].toLowerCase()
 }
 
-function responseFor(command: string, firstName = '') {
+function formatTon(value: number | null) {
+  return value === null ? 'Price undisclosed' : `${value.toLocaleString(undefined, { maximumFractionDigits: 3 })} TON`
+}
+
+function responseFor(command: string, firstName = '', board?: MarketBoard) {
   switch (command) {
     case '/start':
       return `Hi${firstName ? ` ${firstName}` : ''}! 👋\n\nTTOGRM helps you organize Telegram usernames across personal profiles, groups and channels, including collectible usernames.\n\nUse /help to see commands, or /board for username market information.\n\n${DATA_PENDING}`
     case '/help':
       return HELP
-    case '/board':
-      return `📊 TTOGRM Market Info Board\n\n• Username sales in 24h: —\n• Sales volume in 24h: — TON\n• Top sale in 24h: —\n• Recent sales: unavailable\n\n${DATA_PENDING}`
+    case '/board': {
+      if (!board?.available) return `📊 TTOGRM Market Info Board\n\nSales in 24h: —\nSales volume: —\nTop sale: —\n\n${DATA_PENDING}`
+      const top = board.topSale ? `@${board.topSale.username} · ${formatTon(board.topSale.sale_price_ton === null ? null : Number(board.topSale.sale_price_ton))}` : 'No verified sale with a disclosed price'
+      return `📊 TTOGRM Market Info Board · rolling 24h\n\n• Verified sales: ${board.soldCount}\n• Known-price volume: ${formatTon(board.volumeTon)}\n• Top sale: ${top}\n• Latest records loaded: ${board.recentSales.length}${board.updatedAt ? `\n• Latest sale time: ${board.updatedAt}` : ''}\n\nOnly verified ingested records are counted.`
+    }
     case '/sales':
-      return `🧾 Username sales · last 24 hours\n\nSold: —\nReported volume: — TON\n\n${DATA_PENDING}`
-    case '/top':
-      return `🏆 Top username sale · last 24 hours\n\nUsername: —\nSale price: — TON\nSale time: —\n\n${DATA_PENDING}`
+      if (!board?.available) return `🧾 Username sales · last 24 hours\n\nSold: —\nReported volume: —\n\n${DATA_PENDING}`
+      return `🧾 Username sales · rolling 24 hours\n\nVerified sales: ${board.soldCount}\nKnown-price volume: ${formatTon(board.volumeTon)}\n\nOnly verified ingested records are counted.`
+    case '/top': {
+      if (!board?.available) return `🏆 Top username sale · last 24 hours\n\nUsername: —\nSale price: —\n\n${DATA_PENDING}`
+      if (!board.topSale) return '🏆 No verified username sale with a disclosed price is recorded in the current 24-hour window.'
+      return `🏆 Top username sale · rolling 24 hours\n\nUsername: @${board.topSale.username}\nSale price: ${formatTon(board.topSale.sale_price_ton === null ? null : Number(board.topSale.sale_price_ton))}\nSale time: ${board.topSale.sold_at}${board.topSale.source_url ? `\nSource: ${board.topSale.source_url}` : ''}`
+    }
     case '/stats':
-      return `TTOGRM service status\n\n• Bot command endpoint: received\n• Market data source: not connected\n• Verified sales records: 0 loaded\n• Live sales metrics: unavailable\n\nThis means no records have been loaded into TTOGRM yet; it does not mean no usernames were sold.`
+      return `TTOGRM service status\n\n• Bot command endpoint: active\n• Market data source: ${board?.available ? 'connected' : 'not connected'}\n• Verified sales in current 24h window: ${board?.available ? board.soldCount : 'unavailable'}\n\nA zero count means no verified records are loaded in the current window; it does not prove that no usernames were sold.`
     default:
       return 'I did not recognize that command. Send /help to see the available TTOGRM commands.'
   }
@@ -78,7 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const command = commandOf(text)
-  const reply = responseFor(command, message.from?.first_name ?? '')
+  const board = ['/board', '/sales', '/top', '/stats'].includes(command) ? await loadMarketBoard() : undefined
+  const reply = responseFor(command, message.from?.first_name ?? '', board)
   try {
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
