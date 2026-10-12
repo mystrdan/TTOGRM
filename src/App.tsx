@@ -228,7 +228,7 @@ function App() {
           id: item.id, handle: '@' + item.username.replace(/^@/, ''),
           kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
           collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified',
-          note: item.title || (item.verification_status === 'verified' ? 'Verified record' : 'Manually added · not ownership-verified'),
+          note: item.title || (item.verification_status === 'verified' ? 'Verified record' : 'Added manually · ownership not confirmed'),
           color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
         })))
       })
@@ -259,7 +259,7 @@ function App() {
         id: item.id, handle: '@' + item.username,
         kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
         collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified',
-        note: item.title || 'Manually added · not ownership-verified',
+        note: item.title || 'Added manually · ownership not confirmed',
         color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
       }, ...current])
       setNewHandle('')
@@ -276,7 +276,7 @@ function App() {
     setEditKind(item.kind === 'Groups' ? 'group' : item.kind === 'Channels' ? 'channel' : 'personal')
     setEditUsernameType(item.collectible ? 'collectible' : 'basic')
     setEditAssignment(item.assignmentStatus)
-    setEditTitle(item.note.startsWith('Manually added') ? '' : item.note)
+    setEditTitle(item.note.startsWith('Added manually') ? '' : item.note)
     setInventoryError('')
   }
 
@@ -290,7 +290,7 @@ function App() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'We couldn’t update this username. Please try again.')
       const item = result.item as InventoryRecord
-      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified', note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
+      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified', note: item.title || 'Added manually · ownership not confirmed', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
       setEditingId(null)
     } catch (error) { setInventoryError(error instanceof Error ? error.message : 'Could not update this username.') }
     finally { setSavingInventory(false) }
@@ -474,7 +474,7 @@ function App() {
           </div>
         </div>
         <form className="inventory-add-form" onSubmit={(event) => { event.preventDefault(); void saveInventoryItem() }}>
-          <div className="inventory-form-heading"><strong>Add a username</strong><span>Manual records are not proof of ownership.</span></div>
+          <div className="inventory-form-heading"><strong>Add a username</strong><span>Saving a username here doesn’t confirm ownership.</span></div>
           <label className="search-box"><Search size={18} /><input value={newHandle} onChange={(event) => setNewHandle(event.target.value)} placeholder="@username" aria-label="Username to add" maxLength={33} /></label>
           <div className="inventory-form-row">
             <label>Type<select value={newKind} onChange={(event) => setNewKind(event.target.value as typeof newKind)}><option value="personal">Personal</option><option value="group">Group</option><option value="channel">Channel</option></select></label>
@@ -522,7 +522,7 @@ function App() {
           ))}
           {!inventoryLoading && filtered.length === 0 && !inventoryError && <div className="empty-state"><Search size={22} /><strong>{inventory.length === 0 ? "Your collection is empty" : "No usernames found"}</strong><span>{inventory.length === 0 ? "Add a username above to start your collection." : "Try a different search or category."}</span></div>}
         </div>
-        <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Adding a name does not confirm ownership. Automatic username discovery is not available yet.</p>
+        <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Saving a name here doesn’t confirm ownership. Automatic username discovery is not available yet.</p>
       </section>
 
       </>}
@@ -580,7 +580,7 @@ function App() {
           <span className="modal-icon"><Link2 size={24} /></span>
           <h2 id="about-title">TTOGRM</h2>
           <p>Every Telegram name. One place. A private collection for usernames on personal profiles, groups and channels — including basic and collectible usernames.</p>
-          <div className="modal-footnote"><ShieldCheck size={16} /> You can add usernames manually. Automatic discovery is not available yet, and adding a name does not confirm ownership.</div>
+          <div className="modal-footnote"><ShieldCheck size={16} /> You can add usernames manually. Automatic discovery is not available yet, and saving a name here doesn’t confirm ownership.</div>
           <button className="primary-button" onClick={() => setShowAbout(false)}>Back to collection</button>
         </section>
       </div>}
