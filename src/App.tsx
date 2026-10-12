@@ -185,6 +185,12 @@ function App() {
   const [newAssignment, setNewAssignment] = useState<'assigned' | 'unassigned' | 'unknown'>('unknown')
   const [newTitle, setNewTitle] = useState('')
   const [savingInventory, setSavingInventory] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editHandle, setEditHandle] = useState('')
+  const [editKind, setEditKind] = useState<'personal' | 'group' | 'channel'>('personal')
+  const [editUsernameType, setEditUsernameType] = useState<'basic' | 'collectible'>('basic')
+  const [editAssignment, setEditAssignment] = useState<'assigned' | 'unassigned' | 'unknown'>('unknown')
+  const [editTitle, setEditTitle] = useState('')
 
   useEffect(() => {
     let active = true
@@ -259,6 +265,32 @@ function App() {
     } finally { setSavingInventory(false) }
   }
 
+  const beginEdit = (item: Username) => {
+    if (!item.id) return
+    setEditingId(item.id)
+    setEditHandle(item.handle.replace(/^@/, ''))
+    setEditKind(item.kind === 'Groups' ? 'group' : item.kind === 'Channels' ? 'channel' : 'personal')
+    setEditUsernameType(item.collectible ? 'collectible' : 'basic')
+    setEditAssignment(item.assigned ? 'assigned' : 'unassigned')
+    setEditTitle(item.note.startsWith('Manually added') ? '' : item.note)
+    setInventoryError('')
+  }
+
+  const saveEditedItem = async () => {
+    if (!editingId) return
+    const cleanHandle = editHandle.trim().replace(/^@/, '')
+    if (!/^[A-Za-z0-9_]{5,32}$/.test(cleanHandle)) { setInventoryError('Enter a valid Telegram username (5–32 letters, numbers or underscores).'); return }
+    setSavingInventory(true); setInventoryError('')
+    try {
+      const response = await fetch('/api/inventory', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...(initData ? { 'x-telegram-init-data': initData } : {}) }, credentials: 'same-origin', body: JSON.stringify({ id: editingId, username: cleanHandle, entity_type: editKind, username_type: editUsernameType, assignment_status: editAssignment, title: editTitle }) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Could not update this username.')
+      const item = result.item as InventoryRecord
+      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
+      setEditingId(null)
+    } catch (error) { setInventoryError(error instanceof Error ? error.message : 'Could not update this username.') }
+    finally { setSavingInventory(false) }
+  }
   const removeInventoryItem = async (item: Username) => {
     if (!item.id) return
     setInventoryError('')
@@ -429,21 +461,28 @@ function App() {
         {inventoryLoading && <p className="inventory-loading">Loading your saved usernames…</p>}
         <div className="username-list">
           {filtered.map((item) => (
-            <article className="username-card" key={item.handle}>
+            <article className="username-card" key={item.id || item.handle}>
               <span className={`handle-icon ${item.color}`}>
                 {item.kind === 'Personal' ? <Grid2X2 size={20} /> : item.kind === 'Groups' ? <UsersRound size={20} /> : <RadioTower size={20} />}
               </span>
               <div className="handle-info">
-                <div className="handle-title">{item.handle}{item.collectible && <span className="collectible-mark" title="Collectible username"><Gem size={12} /></span>}</div>
-                <div className="handle-subtitle">{item.note}</div>
-                <div className="handle-badges">
-                  <span className="type-badge">{item.kind}</span>
-                  <span className={item.collectible ? 'type-badge collectible' : 'type-badge'}>{item.collectible ? 'Collectible' : 'Basic'}</span>
-                  <span className={item.assigned ? 'assignment-badge assigned' : 'assignment-badge'}>{item.assigned ? 'Assigned' : 'Unassigned'}</span>
-                </div>
+                {editingId === item.id ? <div className="inventory-edit-form">
+                  <input value={editHandle} onChange={(event) => setEditHandle(event.target.value)} aria-label="Edit username" maxLength={33} />
+                  <div className="inventory-form-row">
+                    <label>Type<select value={editKind} onChange={(event) => setEditKind(event.target.value as typeof editKind)}><option value="personal">Personal</option><option value="group">Group</option><option value="channel">Channel</option></select></label>
+                    <label>Class<select value={editUsernameType} onChange={(event) => setEditUsernameType(event.target.value as typeof editUsernameType)}><option value="basic">Basic</option><option value="collectible">Collectible</option></select></label>
+                    <label>Assignment<select value={editAssignment} onChange={(event) => setEditAssignment(event.target.value as typeof editAssignment)}><option value="unknown">Unknown</option><option value="assigned">Assigned</option><option value="unassigned">Unassigned</option></select></label>
+                  </div>
+                  <input value={editTitle} onChange={(event) => setEditTitle(event.target.value)} placeholder="Optional note" aria-label="Edit note" maxLength={100} />
+                  <div className="inventory-edit-actions"><button type="button" onClick={() => void saveEditedItem()} disabled={savingInventory}>{savingInventory ? "Saving…" : "Save changes"}</button><button type="button" onClick={() => setEditingId(null)}>Cancel</button></div>
+                </div> : <>
+                  <div className="handle-title">{item.handle}{item.collectible && <span className="collectible-mark" title="Collectible username"><Gem size={12} /></span>}</div>
+                  <div className="handle-subtitle">{item.note}</div>
+                  <div className="handle-badges"><span className="type-badge">{item.kind}</span><span className={item.collectible ? "type-badge collectible" : "type-badge"}>{item.collectible ? "Collectible" : "Basic"}</span><span className={item.assigned ? "assignment-badge assigned" : "assignment-badge"}>{item.assigned ? "Assigned" : "Unassigned"}</span></div>
+                </>}
               </div>
-              <button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button>
-            </article>
+              {editingId !== item.id && <div className="inventory-row-actions"><button className="row-arrow" aria-label={`Edit ${item.handle}`} onClick={() => beginEdit(item)} title="Edit username"><Pencil size={16} /></button><button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button></div>}
+            </article>  </article>
           ))}
           {filtered.length === 0 && <div className="empty-state"><Search size={22} /><strong>No usernames found</strong><span>Try a different search or category.</span></div>}
         </div>
