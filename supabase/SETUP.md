@@ -49,7 +49,7 @@ supabase functions deploy telegram-auth
 
 Telegram Mini App `initData` verifies the Telegram account that opened TTOGRM. It does not provide a complete list of groups/channels or all usernames connected to that account. Full inventory discovery remains separate work and may require an explicit, consent-based Telegram client authorization flow. Never request a Telegram login code, password, or session string inside the Mini App.
 
-TON wallet connection is planned as an optional TON-only feature. A wallet address by itself does not prove ownership of every Telegram collectible username.
+Wallet connection is planned as an optional TON-blockchain-only feature. Gram (GRAM) is the network's native currency; TON remains the blockchain name. A wallet address by itself does not prove ownership of every Telegram collectible username.
 
 ## Telegram bot commands and webhook
 
