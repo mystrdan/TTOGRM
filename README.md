@@ -6,7 +6,7 @@ TTOGRM is a Telegram-native username portfolio concept for organizing usernames 
 
 ## MVP scope
 
-- Responsive browser + Telegram Mini App interface.
+- Responsive browser + Telegram Mini App interface with separate Collection, Market, Wallet, and Settings pages.
 - Telegram Login Widget sign-in for regular browsers and desktop, with server-side hash verification and a signed, HttpOnly seven-day session cookie.
 - TON Connect wallet UI for browser, desktop, and Telegram-compatible wallet flows.
 - Username inventory organized by personal profile, groups, and channels.
@@ -22,7 +22,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 
 ## Current status
 
-- React + TypeScript Mini App interface is in place.
+- React + TypeScript Mini App interface is in place, with dedicated `/collection`, `/market`, `/wallet`, and `/settings` page URLs and browser back/forward navigation.
 - Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data. Browser login now persists the verified identity in a signed, HttpOnly cookie for up to seven days, with a session-check endpoint and sign-out action; this session is not yet wired to private database inventory access.
