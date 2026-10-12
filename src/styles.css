@@ -213,3 +213,18 @@ h1 span { color: var(--blue); }
 .guest-settings { padding: 8px 0 20px; }
 .guest-settings-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
 @media (max-width: 440px) { .public-benefits { display: grid; grid-template-columns: 1fr; } .header-signin { padding: 9px 10px; } }
+
+/* Private inventory management */
+.inventory-add-form { display: grid; gap: 11px; margin: 18px 0 14px; padding: 15px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.inventory-form-heading { display: flex; flex-direction: column; gap: 4px; }
+.inventory-form-heading strong { color: #eaf2f7; font-size: 13px; }
+.inventory-form-heading span { color: #91a4b2; font-size: 10px; line-height: 1.5; }
+.inventory-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.inventory-form-row label { display: grid; gap: 6px; color: #91a4b2; font-size: 10px; }
+.inventory-form-row select, .inventory-title-input { width: 100%; min-width: 0; padding: 10px 8px; border: 1px solid var(--line); border-radius: 10px; background: #13232e; color: #dce8ef; font: inherit; font-size: 11px; }
+.inventory-title-input { padding: 12px; }
+.inventory-save-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.inventory-save-button:disabled { opacity: .6; cursor: wait; }
+.inventory-error { margin: 8px 0 14px; }
+.inventory-loading { color: #91a4b2; font-size: 12px; }
+@media (max-width: 440px) { .inventory-form-row { grid-template-columns: 1fr; } .inventory-form-row label { grid-template-columns: 96px minmax(0, 1fr); align-items: center; } }
