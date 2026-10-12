@@ -8,7 +8,7 @@ The TTOGRM Supabase project is provisioned on the Free plan in `eu-west-2` (Lond
 
 ## Current state
 
-- The private inventory migration is applied.
+- The private inventory migration and verified market-sales migrations are applied, including the Gram currency naming migration (`202610120004_gram_currency_naming.sql`).
 - The `telegram-auth` Edge Function is deployed.
 - Browser roles cannot directly read or write the private inventory tables. Access is reserved for trusted server-side code.
 - Telegram authentication will return HTTP 503 until the bot token is added as an Edge Function secret.
@@ -75,7 +75,7 @@ stats - Check market data status
 
 ## Market information board
 
-- `market_sales` stores sale observations with a source, timestamp, price when known, and verification status.
+- `market_sales` stores sale observations with a source, timestamp, price when known, and verification status. Price is stored in `sale_price_gram`; market prices and volume are denominated in Gram (GRAM), while TON is the blockchain name.
 - The `get_public_market_board()` database function aggregates only verified records in the rolling 24-hour window.
 - `GET /api/market-board` and the bot's `/board`, `/sales`, `/top`, and `/stats` commands use the same aggregate.
 - The board intentionally shows unavailable values until `SUPABASE_SERVICE_ROLE_KEY` is configured and a trusted market ingestion feed supplies verified sales. A missing data feed is not interpreted as zero market activity.
