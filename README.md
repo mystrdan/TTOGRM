@@ -25,7 +25,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The dashboard still uses clearly labelled demo inventory data.
 - MTProto username discovery and wallet connection on the TON blockchain are not implemented yet.
-- Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, and `/currency`.
+- Telegram bot webhook commands are implemented in `api/telegram-webhook.ts`: `/start`, `/help`, `/board`, `/sales`, `/top`, `/stats`, and `/currency`, and `/inventory`.
 - The market information board UI and `GET /api/market-board` endpoint are implemented. A private verified-sales ledger and 24-hour aggregate function are provisioned; live market figures remain unavailable until trusted sales ingestion and server-side secrets are configured.
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
 - Vercel project `ttogrm` is connected to this repository with `main` as its production branch. Project: https://vercel.com/capsicom/ttogrm. The first deployment was initiated; check the Vercel dashboard for its current build status.
@@ -87,6 +87,7 @@ sales - Check reported sales in the last 24 hours
 top - View the highest reported username sale
 stats - Check market data status
 currency - Explain Gram (GRAM) and the TON blockchain
+inventory - Explain inventory discovery and demo data
 ```
 
 ## Development
