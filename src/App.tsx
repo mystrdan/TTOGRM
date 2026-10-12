@@ -9,6 +9,7 @@ import {
   Gem,
   Grid2X2,
   Layers3,
+  Pencil,
   Link2,
   LockKeyhole,
   RadioTower,
