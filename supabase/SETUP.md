@@ -11,11 +11,31 @@ The TTOGRM Supabase project is provisioned on the Free plan in `eu-west-2` (Lond
 - The private inventory migration and verified market-sales migrations are applied, including the Gram currency naming migration (`202610120004_gram_currency_naming.sql`).
 - The `telegram-auth` Edge Function is deployed.
 - Browser roles cannot directly read or write the private inventory tables. Access is reserved for trusted server-side code.
-- Telegram authentication will return HTTP 503 until the bot token is added as an Edge Function secret.
+- The function will return HTTP 503 until `TELEGRAM_BOT_TOKEN` is added as an Edge Function secret.
+
+## Vercel deployment
+
+The repository `mystrdan/TTOGRM` is linked to the Vercel project `ttogrm`, with `main` as the production branch.
+
+- Project dashboard: https://vercel.com/capsicom/ttogrm
+- Default domain: https://ttogrm.vercel.app
+- Telegram webhook endpoint: https://ttogrm.vercel.app/api/telegram-webhook
+
+Vercel Git integration is enabled so pushes to `main` can trigger production deployments automatically. Check the project dashboard for current build status and deployment URLs.
+
+In **Vercel → Project → Settings → Environment Variables**, configure the variables required for the features you enable:
+
+- `TELEGRAM_BOT_TOKEN`: bot token for server-side Telegram authentication and replies.
+- `TELEGRAM_WEBHOOK_SECRET`: a random secret used to validate incoming Telegram webhook requests.
+- `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
+- `SUPABASE_SERVICE_ROLE_KEY`: needed for the server-side market-board API. Never expose this in frontend code.
+- `VITE_TELEGRAM_AUTH_URL`: optional public endpoint URL for the Supabase auth function, if the frontend should call it instead of `/api/auth`.
+
+Do not create a `VITE_TELEGRAM_BOT_TOKEN` or `VITE_SUPABASE_SERVICE_ROLE_KEY`. Vite-prefixed variables are exposed to browser code. After changing environment variables, trigger a fresh deployment for the target environment.
 
 ## Add the Telegram bot token securely
 
-Do not place the token in source code, frontend variables, GitHub commits, logs, or chat messages. Set it directly as a Supabase Edge Function secret.
+Do not place the token in source code, frontend variables, GitHub commits, logs, or chat messages. If a token has been shared outside the secret manager, rotate it with BotFather and configure the rotated token directly as a server-side secret.
 
 Using the Supabase Dashboard is the simplest option: open this project, go to Edge Functions / Secrets, and add a secret named `TELEGRAM_BOT_TOKEN` with the token as its value.
 
@@ -33,8 +53,6 @@ supabase secrets set --env-file .env --project-ref eugovevzpptsfstkjcaf
 
 The repository ignores `.env`; never commit it or use a `VITE_*` variable for this secret.
 
-Because the token was previously shared in a chat, rotate it with BotFather before production use, then set the newly rotated token as the secret.
-
 ## Deploy updates
 
 From the repository root, after installing and authenticating the Supabase CLI:
@@ -42,8 +60,10 @@ From the repository root, after installing and authenticating the Supabase CLI:
 ```sh
 supabase link --project-ref eugovevzpptsfstkjcaf
 supabase db push
-supabase functions deploy telegram-auth
+supabase functions deploy telegram-auth --no-verify-jwt
 ```
+
+JWT verification is disabled at the gateway only because this endpoint performs its own Telegram signed-`initData` verification. The function must reject requests without valid signed data.
 
 ## Important product limitations
 
@@ -60,7 +80,7 @@ The Vercel webhook handler is at `api/telegram-webhook.ts`. Configure these as s
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
 - `SUPABASE_SERVICE_ROLE_KEY`: the project service-role secret, server-side only. Never use it in the frontend or commit it.
 
-After deployment, set the webhook to `https://YOUR_VERCEL_DOMAIN/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
+After deployment, set the webhook to `https://ttogrm.vercel.app/api/telegram-webhook` and use the same `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token`. Use Telegram's official `setWebhook` method; never commit a real token or secret in the command. The handler checks Telegram's `X-Telegram-Bot-Api-Secret-Token` header.
 
 Register these commands with BotFather using `/setcommands`:
 
