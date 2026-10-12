@@ -17,13 +17,21 @@ The TTOGRM Supabase project is provisioned on the Free plan in `eu-west-2` (Lond
 
 Do not place the token in source code, frontend variables, GitHub commits, logs, or chat messages. Set it directly as a Supabase Edge Function secret.
 
-Using the Supabase CLI:
+Using the Supabase Dashboard is the simplest option: open this project, go to Edge Functions / Secrets, and add a secret named `TELEGRAM_BOT_TOKEN` with the token as its value.
 
-```sh
-supabase secrets set TELEGRAM_BOT_TOKEN --project-ref eugovevzpptsfstkjcaf
+Or, use a local ignored `.env` file containing only:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=replace-with-your-rotated-token
 ```
 
-If your CLI version prompts for a value, enter it at the prompt. Alternatively, set the secret in the Supabase Dashboard under Edge Functions / Secrets. Do not commit a local `.env` file.
+Then run:
+
+```sh
+supabase secrets set --env-file .env --project-ref eugovevzpptsfstkjcaf
+```
+
+The repository ignores `.env`; never commit it or use a `VITE_*` variable for this secret.
 
 Because the token was previously shared in a chat, rotate it with BotFather before production use, then set the newly rotated token as the secret.
 
