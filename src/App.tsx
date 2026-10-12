@@ -52,12 +52,13 @@ function App() {
   const [verifiedUser, setVerifiedUser] = useState<VerifiedTelegramUser | null>(null)
   const [authState, setAuthState] = useState<'preview' | 'checking' | 'verified' | 'failed'>('preview')
   const initData = window.Telegram?.WebApp?.initData ?? ''
+  const authEndpoint = import.meta.env.VITE_TELEGRAM_AUTH_URL || '/api/auth'
 
   useEffect(() => {
     if (!initData) return
     let active = true
     setAuthState('checking')
-    fetch('/api/auth', {
+    fetch(authEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ initData }),
