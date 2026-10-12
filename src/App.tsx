@@ -345,7 +345,7 @@ function App() {
     return Number.isFinite(number) ? `${number.toLocaleString(undefined, { maximumFractionDigits: 3 })} GRAM` : 'Price undisclosed'
   }
   const displayName = verifiedUser?.first_name || 'Your collection'
-  const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
+  const username = verifiedUser?.username ? `@${verifiedUser.username}` : 'Telegram account'
 
   const filtered = useMemo(() => {
     let list = inventory.filter((item) => {
@@ -453,7 +453,7 @@ function App() {
         </div>
         <div className="market-board-bottom">
           <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest confirmed sales` : 'Confirmed sales will appear here when available.'}</span></div>
-          <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Bot commands <ArrowUpRight size={15} /></button>
+          <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Telegram bot help <ArrowUpRight size={15} /></button>
         </div>
         {marketBoard?.available && marketBoard.recentSales.length > 0 && <div className="market-sales-list">
           {marketBoard.recentSales.map((sale, index) => <div className="market-sale-row" key={`${sale.username}-${sale.sold_at}-${index}`}>
@@ -558,11 +558,11 @@ function App() {
         <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="bot-title" onClick={(event) => event.stopPropagation()}>
           <button className="modal-close" aria-label="Close" onClick={() => setShowBotHelp(false)}><X size={18} /></button>
           <span className="modal-icon"><ChartNoAxesCombined size={24} /></span>
-          <h2 id="bot-title">TTOGRM bot commands</h2>
-          <p>Use these commands in the TTOGRM Telegram bot. Market commands will report when verified sales data is available.</p>
+          <h2 id="bot-title">TTOGRM on Telegram</h2>
+          <p>Open the TTOGRM bot in Telegram and send one of these messages to get started. Sales information will appear when confirmed sales are available.</p>
           <div className="command-list">
-            <div><code>/start</code><span>Open TTOGRM and see the welcome menu</span></div>
-            <div><code>/help</code><span>List bot commands and how the service works</span></div>
+            <div><code>/start</code><span>Open TTOGRM and view the welcome menu</span></div>
+            <div><code>/help</code><span>Get help and learn how TTOGRM works</span></div>
             <div><code>/board</code><span>Open the market information board</span></div>
             <div><code>/sales</code><span>Check the last 24 hours of username sales</span></div>
             <div><code>/top</code><span>View the highest-value reported username sale</span></div>
