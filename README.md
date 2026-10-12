@@ -65,6 +65,10 @@ npm install
 npm run dev
 ```
 
+## Database foundation
+
+A private-first schema migration is staged at `supabase/migrations/202610120001_private_inventory.sql`. It defines username inventory and discovery-run tables, enables RLS, and revokes direct table access from browser-facing `anon` and `authenticated` roles. Trusted server-side functions must validate Telegram identity and scope every read/write to that verified Telegram user. This migration is not applied until a dedicated TTOGRM Supabase project is created.
+
 ## Planned architecture
 
 - **Frontend:** React + TypeScript + Vite, designed to run inside Telegram.
