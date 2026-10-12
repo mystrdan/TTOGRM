@@ -15,7 +15,6 @@ import {
   Search,
   Settings2,
   ShieldCheck,
-  Sparkles,
   UsersRound,
   Wallet,
   X,
@@ -31,14 +30,6 @@ type Username = {
   note: string
   color: string
 }
-
-const demoUsernames: Username[] = [
-  { handle: '@mystrdan', kind: 'Personal', collectible: false, assigned: true, note: 'Personal profile', color: 'blue' },
-  { handle: '@kilogger', kind: 'Personal', collectible: true, assigned: true, note: 'Collectible username', color: 'violet' },
-  { handle: '@vaagmer', kind: 'Channels', collectible: true, assigned: false, note: 'Not assigned in this demo', color: 'orange' },
-  { handle: '@opntalk', kind: 'Groups', collectible: false, assigned: true, note: 'Community group', color: 'green' },
-  { handle: '@grffik', kind: 'Channels', collectible: false, assigned: true, note: 'Project channel', color: 'pink' },
-]
 
 const filters = ['All names', 'Personal', 'Groups', 'Channels', 'Collectibles'] as const
 type Filter = (typeof filters)[number]
