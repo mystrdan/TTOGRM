@@ -30,6 +30,7 @@ type Username = {
   collectible: boolean
   assigned: boolean
   assignmentStatus: 'assigned' | 'unassigned' | 'unknown'
+  verificationStatus: string
   note: string
   color: string
 }
@@ -226,7 +227,7 @@ function App() {
         setInventory(result.items.map((item) => ({
           id: item.id, handle: '@' + item.username.replace(/^@/, ''),
           kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
-          collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status,
+          collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified',
           note: item.title || (item.verification_status === 'verified' ? 'Verified record' : 'Manually added · not ownership-verified'),
           color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
         })))
@@ -257,7 +258,7 @@ function App() {
       setInventory((current) => [{
         id: item.id, handle: '@' + item.username,
         kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal',
-        collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status,
+        collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified',
         note: item.title || 'Manually added · not ownership-verified',
         color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue',
       }, ...current])
@@ -289,7 +290,7 @@ function App() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || 'Could not update this username.')
       const item = result.item as InventoryRecord
-      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
+      setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified', note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
       setEditingId(null)
     } catch (error) { setInventoryError(error instanceof Error ? error.message : 'Could not update this username.') }
     finally { setSavingInventory(false) }
@@ -324,7 +325,7 @@ function App() {
         item.collectible ? 'collectible' : 'basic',
         item.assignmentStatus,
         item.note,
-        'unverified',
+        item.verificationStatus || 'unverified',
       ]),
     ]
     const csv = '\uFEFF' + rows.map((row) => row.map(escapeCell).join(',')).join('\r\n')
