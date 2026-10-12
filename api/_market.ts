@@ -1,6 +1,6 @@
 export type MarketSale = {
   username: string
-  sale_price_ton: number | string | null
+  sale_price_gram: number | string | null
   sold_at: string
   source_url?: string | null
 }
@@ -9,7 +9,7 @@ export type MarketBoard = {
   available: boolean
   windowStart: string
   soldCount: number
-  volumeTon: number | null
+  volumeGram: number | null
   topSale: MarketSale | null
   recentSales: MarketSale[]
   updatedAt: string | null
@@ -23,7 +23,7 @@ export async function loadMarketBoard(): Promise<MarketBoard> {
   const windowStart = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
 
   if (!serviceKey) {
-    return { available: false, windowStart, soldCount: 0, volumeTon: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Market data backend is not configured.' }
+    return { available: false, windowStart, soldCount: 0, volumeGram: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Market data backend is not configured.' }
   }
 
   try {
@@ -38,11 +38,11 @@ export async function loadMarketBoard(): Promise<MarketBoard> {
       cache: 'no-store',
     })
     if (!response.ok) {
-      return { available: false, windowStart, soldCount: 0, volumeTon: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Market statistics are not available yet.' }
+      return { available: false, windowStart, soldCount: 0, volumeGram: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Market statistics are not available yet.' }
     }
     const data = await response.json() as {
       soldCount?: number
-      volumeTon?: number | null
+      volumeGram?: number | null
       topSale?: MarketSale | null
       recentSales?: MarketSale[]
       updatedAt?: string | null
@@ -52,12 +52,12 @@ export async function loadMarketBoard(): Promise<MarketBoard> {
       available: true,
       windowStart: data.windowStart || windowStart,
       soldCount: Number(data.soldCount || 0),
-      volumeTon: data.volumeTon == null ? null : Number(data.volumeTon),
+      volumeGram: data.volumeGram == null ? null : Number(data.volumeGram),
       topSale: data.topSale || null,
       recentSales: Array.isArray(data.recentSales) ? data.recentSales : [],
       updatedAt: data.updatedAt || null,
     }
   } catch {
-    return { available: false, windowStart, soldCount: 0, volumeTon: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Unable to load market statistics.' }
+    return { available: false, windowStart, soldCount: 0, volumeGram: null, topSale: null, recentSales: [], updatedAt: null, reason: 'Unable to load market statistics.' }
   }
 }
