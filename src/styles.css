@@ -228,3 +228,12 @@ h1 span { color: var(--blue); }
 .inventory-error { margin: 8px 0 14px; }
 .inventory-loading { color: #91a4b2; font-size: 12px; }
 @media (max-width: 440px) { .inventory-form-row { grid-template-columns: 1fr; } .inventory-form-row label { grid-template-columns: 96px minmax(0, 1fr); align-items: center; } }
+
+.inventory-row-actions { display: flex; align-items: center; gap: 3px; }
+.inventory-row-actions .row-arrow { flex-shrink: 0; }
+.inventory-edit-form { display: grid; gap: 9px; width: 100%; }
+.inventory-edit-form > input { width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #13232e; color: #dce8ef; font: inherit; font-size: 12px; }
+.inventory-edit-actions { display: flex; gap: 8px; }
+.inventory-edit-actions button { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: #203644; color: #eaf2f7; font: inherit; font-size: 11px; cursor: pointer; }
+.inventory-edit-actions button:first-child { background: #7ed957; border-color: #7ed957; color: #10200b; font-weight: 700; }
+.inventory-edit-actions button:disabled { opacity: .6; cursor: wait; }
