@@ -394,7 +394,7 @@ function App() {
             <span className="connection-pill connected"><span />Identity verified</span>
           </div>
         </> : <>
-          <div className="eyebrow"><span className="status-dot" /> TELEGRAM USERNAME WORKSPACE</div>
+          <div className="eyebrow"><span className="status-dot" /> YOUR TELEGRAM USERNAMES</div>
           <h1>Every name.<br /><span>One place.</span></h1>
           <p className="welcome-copy">A private workspace for your Telegram usernames — from personal profiles to groups, channels, and collectibles. Sign in to open your dashboard.</p>
           <div className="public-benefits">
@@ -467,7 +467,7 @@ function App() {
 
       {activePage === 'collection' && verifiedUser && <><section className="collection-section">
         <div className="section-heading">
-          <div><div className="eyebrow">YOUR INVENTORY</div><h2>Username collection</h2></div>
+          <div><div className="eyebrow">YOUR COLLECTION</div><h2>Username collection</h2></div>
           <div className="collection-heading-actions">
             <button className="icon-button" aria-label="Download collection" title="Download collection" onClick={exportInventoryCsv} disabled={inventory.length === 0}><Download size={17} /></button>
             <button className="icon-button" aria-label="Sort usernames" title="Reverse sort order" onClick={() => setSortNewest((value) => !value)}><ArrowDownUp size={18} /></button>
@@ -522,7 +522,7 @@ function App() {
           ))}
           {!inventoryLoading && filtered.length === 0 && !inventoryError && <div className="empty-state"><Search size={22} /><strong>{inventory.length === 0 ? "Your collection is empty" : "No usernames found"}</strong><span>{inventory.length === 0 ? "Add a username above to start your collection." : "Try a different search or category."}</span></div>}
         </div>
-        <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Saving a name here doesn’t confirm ownership. Automatic username discovery is not available yet.</p>
+        <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Saving a name here doesn’t confirm ownership. TTOGRM can’t find usernames automatically yet.</p>
       </section>
 
       </>}
