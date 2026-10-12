@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowDownUp,
   ArrowUpRight,
@@ -40,16 +40,53 @@ const demoUsernames: Username[] = [
 const filters = ['All names', 'Personal', 'Groups', 'Channels', 'Collectibles'] as const
 type Filter = (typeof filters)[number]
 
+type VerifiedTelegramUser = {
+  id: number
+  first_name: string
+  last_name?: string
+  username?: string
+  photo_url?: string
+}
+
 function App() {
+  const [verifiedUser, setVerifiedUser] = useState<VerifiedTelegramUser | null>(null)
+  const [authState, setAuthState] = useState<'preview' | 'checking' | 'verified' | 'failed'>('preview')
+  const initData = window.Telegram?.WebApp?.initData ?? ''
+
+  useEffect(() => {
+    if (!initData) return
+    let active = true
+    setAuthState('checking')
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    })
+      .then(async (response) => {
+        const result = await response.json()
+        if (!response.ok) throw new Error(result.error || 'Telegram verification failed')
+        return result.user as VerifiedTelegramUser
+      })
+      .then((user) => {
+        if (!active) return
+        setVerifiedUser(user)
+        setAuthState('verified')
+      })
+      .catch(() => {
+        if (!active) return
+        setVerifiedUser(null)
+        setAuthState('failed')
+      })
+    return () => { active = false }
+  }, [initData])
+
   const [filter, setFilter] = useState<Filter>('All names')
   const [query, setQuery] = useState('')
   const [showWalletInfo, setShowWalletInfo] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [sortNewest, setSortNewest] = useState(false)
-  const user = window.Telegram?.WebApp?.initDataUnsafe?.user
-  const inTelegram = Boolean(window.Telegram?.WebApp?.initData)
-  const displayName = user?.first_name || 'Your collection'
-  const username = user?.username ? `@${user.username}` : '@telegram_user'
+  const displayName = verifiedUser?.first_name || 'Your collection'
+  const username = verifiedUser?.username ? `@${verifiedUser.username}` : '@telegram_user'
 
   const filtered = useMemo(() => {
     let list = demoUsernames.filter((item) => {
@@ -79,7 +116,7 @@ function App() {
         <div className="top-actions">
           <button className="icon-button subtle-button" aria-label="About TTOGRM" onClick={() => setShowAbout(true)}><CircleHelp size={19} /></button>
           <button className="avatar-button" aria-label="Open profile" onClick={() => setShowAbout(true)}>
-            {user?.photo_url ? <img src={user.photo_url} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
+            {verifiedUser?.photo_url ? <img src={verifiedUser.photo_url} alt="" /> : <span>{displayName.slice(0, 1).toUpperCase()}</span>}
           </button>
         </div>
       </header>
@@ -91,7 +128,7 @@ function App() {
         <div className="profile-chip">
           <span className="profile-avatar">{displayName.slice(0, 1).toUpperCase()}</span>
           <span className="profile-copy"><strong>{displayName}</strong><small>{username}</small></span>
-          <span className={inTelegram ? 'connection-pill connected' : 'connection-pill'}><span />{inTelegram ? 'Telegram opened' : 'Preview mode'}</span>
+          <span className={authState === 'verified' ? 'connection-pill connected' : 'connection-pill'}><span />{authState === 'verified' ? 'Identity verified' : authState === 'checking' ? 'Verifying Telegram' : authState === 'failed' ? 'Verification failed' : 'Preview mode'}</span>
         </div>
       </section>
 
