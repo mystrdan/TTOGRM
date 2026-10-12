@@ -520,7 +520,7 @@ function App() {
               {editingId !== item.id && <div className="inventory-row-actions"><button className="row-arrow" aria-label={`Edit ${item.handle}`} onClick={() => beginEdit(item)} title="Edit username"><Pencil size={16} /></button><button className="row-arrow" aria-label={`Remove ${item.handle} from collection`} onClick={() => void removeInventoryItem(item)} title="Remove from collection"><X size={17} /></button></div>}
             </article>
           ))}
-          {filtered.length === 0 && <div className="empty-state"><Search size={22} /><strong>No usernames found</strong><span>Try a different search or category.</span></div>}
+          {!inventoryLoading && filtered.length === 0 && !inventoryError && <div className="empty-state"><Search size={22} /><strong>{inventory.length === 0 ? "Your collection is empty" : "No usernames found"}</strong><span>{inventory.length === 0 ? "Add a username above to start your collection." : "Try a different search or category."}</span></div>}
         </div>
         <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Adding a name does not confirm ownership. Automatic username discovery is not available yet.</p>
       </section>
