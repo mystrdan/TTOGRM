@@ -85,7 +85,7 @@ function App() {
     fetch('/api/telegram-session', { credentials: 'same-origin', cache: 'no-store' })
       .then(async (response) => {
         const result = await response.json()
-        if (!response.ok) throw new Error(result.error || 'Session check failed')
+        if (!response.ok) throw new Error(result.error || 'Please sign in again.')
         return result as { authenticated: boolean; user?: VerifiedTelegramUser }
       })
       .then((result) => {
@@ -116,7 +116,7 @@ function App() {
     })
       .then(async (response) => {
         const result = await response.json()
-        if (!response.ok) throw new Error(result.error || 'Telegram verification failed')
+        if (!response.ok) throw new Error(result.error || 'Please try signing in again.')
         return result.user as VerifiedTelegramUser
       })
       .then((user) => {
@@ -146,7 +146,7 @@ function App() {
       })
         .then(async (response) => {
           const result = await response.json()
-          if (!response.ok) throw new Error(result.error || 'Telegram login failed')
+          if (!response.ok) throw new Error(result.error || 'Please try signing in again.')
           return result.user as VerifiedTelegramUser
         })
         .then((user) => {
@@ -201,7 +201,7 @@ function App() {
     fetch('/api/market-board', { cache: 'no-store' })
       .then(async (response) => {
         const data = await response.json()
-        if (!response.ok && !data) throw new Error('Market board unavailable')
+        if (!response.ok && !data) throw new Error('Sales information is not available right now.')
         return data as MarketBoard
       })
       .then((data) => { if (active) setMarketBoard(data) })
@@ -219,7 +219,7 @@ function App() {
     fetch('/api/inventory', { headers: initData ? { 'x-telegram-init-data': initData } : {}, credentials: 'same-origin', cache: 'no-store' })
       .then(async (response) => {
         const result = await response.json()
-        if (!response.ok) throw new Error(result.error || 'Could not load your inventory.')
+        if (!response.ok) throw new Error(result.error || 'We couldn’t load your collection. Please try again shortly.')
         return result as { items: InventoryRecord[] }
       })
       .then((result) => {
@@ -253,7 +253,7 @@ function App() {
         body: JSON.stringify({ username: cleanHandle, entity_type: newKind, username_type: newUsernameType, assignment_status: newAssignment, title: newTitle }),
       })
       const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Could not save this username.')
+      if (!response.ok) throw new Error(result.error || 'We couldn’t save this username. Please try again.')
       const item = result.item as InventoryRecord
       setInventory((current) => [{
         id: item.id, handle: '@' + item.username,
@@ -288,7 +288,7 @@ function App() {
     try {
       const response = await fetch('/api/inventory', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...(initData ? { 'x-telegram-init-data': initData } : {}) }, credentials: 'same-origin', body: JSON.stringify({ id: editingId, username: cleanHandle, entity_type: editKind, username_type: editUsernameType, assignment_status: editAssignment, title: editTitle }) })
       const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Could not update this username.')
+      if (!response.ok) throw new Error(result.error || 'We couldn’t update this username. Please try again.')
       const item = result.item as InventoryRecord
       setInventory((current) => current.map((entry) => entry.id !== editingId ? entry : ({ ...entry, handle: '@' + item.username, kind: item.entity_type === 'group' ? 'Groups' : item.entity_type === 'channel' ? 'Channels' : 'Personal', collectible: item.username_type === 'collectible', assigned: item.assignment_status === 'assigned', assignmentStatus: item.assignment_status, verificationStatus: item.verification_status || 'unverified', note: item.title || 'Manually added · not ownership-verified', color: item.entity_type === 'group' ? 'green' : item.entity_type === 'channel' ? 'orange' : 'blue' })))
       setEditingId(null)
@@ -297,13 +297,14 @@ function App() {
   }
   const removeInventoryItem = async (item: Username) => {
     if (!item.id) return
+    if (!window.confirm(`Remove ${item.handle} from your collection?`)) return
     setInventoryError('')
     try {
       const response = await fetch('/api/inventory?id=' + encodeURIComponent(item.id), {
         method: 'DELETE', headers: initData ? { 'x-telegram-init-data': initData } : {}, credentials: 'same-origin',
       })
       const result = await response.json()
-      if (!response.ok) throw new Error(result.error || 'Could not remove this username.')
+      if (!response.ok) throw new Error(result.error || 'We couldn’t remove this username. Please try again.')
       setInventory((current) => current.filter((entry) => entry.id !== item.id))
     } catch (error) {
       setInventoryError(error instanceof Error ? error.message : 'Could not remove this username.')
@@ -408,13 +409,13 @@ function App() {
 
       {!verifiedUser && !initData && <section className="browser-auth-card" aria-label="Telegram browser sign in">
         <div className="browser-auth-copy">
-          <span className="eyebrow">WEB ACCESS</span>
+          <span className="eyebrow">BROWSER SIGN-IN</span>
           <h2>{authState === 'verified' ? 'Telegram connected' : 'Continue with Telegram'}</h2>
           <p>{authState === 'verified' ? 'Your Telegram identity has been verified for this browser session.' : 'Open TTOGRM from any browser or desktop. Sign in with Telegram, then connect your TON wallet independently.'}</p>
         </div>
         {botUsername
           ? <div id="telegram-login-container" className="telegram-login-container" />
-          : <p className="setup-hint">Telegram browser login needs <code>VITE_TELEGRAM_BOT_USERNAME</code> in Vercel and the production domain linked to your bot in BotFather.</p>}
+          : <p className="setup-hint">Browser sign-in is temporarily unavailable. Please open TTOGRM from Telegram to continue.</p>}
         {authState === 'verified' && <button className="sign-out-button" onClick={() => void signOut()}>Sign out</button>}
         {authState === 'failed' && <p className="auth-error">Telegram verification failed. Please try again.</p>}
       </section>}
@@ -442,16 +443,16 @@ function App() {
       {activePage === 'market' && <section className="market-board" aria-labelledby="market-board-title">
         <div className="section-heading">
           <div><div className="eyebrow"><ChartNoAxesCombined size={13} /> TELEGRAM USERNAME MARKET</div><h2 id="market-board-title">Market info board</h2></div>
-          <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Feed connected' : 'No verified sales loaded') : 'Awaiting data'}</span>
+          <span className={marketBoard?.available ? 'board-status live' : 'board-status'}><span />{marketLoading ? 'Loading' : marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Sales available' : 'No confirmed sales yet') : 'No sales data yet'}</span>
         </div>
-        <p className="board-intro">Public sales activity for Telegram collectible usernames over the rolling 24-hour window. Only verified records are counted; current feed status: {marketBoard?.available ? (marketBoard.soldCount > 0 ? 'connected with verified records' : 'reachable, but no verified sales are loaded') : 'not connected'}.</p>
+        <p className="board-intro">Recent public sales of Telegram collectible usernames over the last 24 hours. Only confirmed sales are included. {marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Confirmed sales are available below.' : 'There are no confirmed sales to show yet.') : 'Sales information is not available yet.'}</p>
         <div className="market-metrics">
-          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Verified sale records' : 'No verified records in the current window') : 'Waiting for trusted feed'}</small></article>
+          <article className="market-metric"><span>Sold in 24h</span><strong>{marketBoard?.available ? marketBoard.soldCount.toLocaleString() : '—'}</strong><small>{marketBoard?.available ? (marketBoard.soldCount > 0 ? 'Verified sale records' : 'No verified records in the current window') : 'Sales data not available yet'}</small></article>
           <article className="market-metric"><span>24h sales volume</span><strong>{marketBoard?.available && marketBoard.volumeGram !== null ? formatGram(marketBoard.volumeGram) : '—'}</strong><small>{marketBoard?.available ? 'Known sale prices only' : 'Waiting for trusted feed'}</small></article>
           <article className="market-metric"><span>Top sale · 24h</span><strong>{marketBoard?.available && marketBoard.topSale ? `@${marketBoard.topSale.username}` : '—'}</strong><small>{marketBoard?.available && marketBoard.topSale ? formatGram(marketBoard.topSale.sale_price_gram) : 'No verified top sale yet'}</small></article>
         </div>
         <div className="market-board-bottom">
-          <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest verified records` : marketBoard?.reason || 'No verified sale records loaded yet.'}</span></div>
+          <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest confirmed sales` : 'Confirmed sales will appear here when available.'}</span></div>
           <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Bot commands <ArrowUpRight size={15} /></button>
         </div>
         {marketBoard?.available && marketBoard.recentSales.length > 0 && <div className="market-sales-list">
@@ -461,7 +462,7 @@ function App() {
             {sale.source_url && <a href={sale.source_url} target="_blank" rel="noreferrer" aria-label={`Open sale source for ${sale.username}`}><ArrowUpRight size={14} /></a>}
           </div>)}
         </div>}
-        <p className="demo-note"><ShieldCheck size={14} /> No estimated or invented sales figures. Market data is currently {marketBoard?.available ? 'connected, but only ingested verified records are shown' : 'not connected'}.</p>
+        <p className="demo-note"><ShieldCheck size={14} /> Only confirmed sales are shown. {marketBoard?.available ? 'Figures reflect the available confirmed sales.' : 'Market information is not available yet.'}</p>
       </section>}
 
       {activePage === 'collection' && verifiedUser && <><section className="collection-section">
@@ -521,7 +522,7 @@ function App() {
           ))}
           {filtered.length === 0 && <div className="empty-state"><Search size={22} /><strong>No usernames found</strong><span>Try a different search or category.</span></div>}
         </div>
-        <p className="demo-note"><ShieldCheck size={14} /> Saved records are private to your account. Adding a username does not verify Telegram ownership; automatic discovery is not connected yet.</p>
+        <p className="demo-note"><ShieldCheck size={14} /> Your saved usernames are private. Adding a name does not confirm ownership. Automatic username discovery is not available yet.</p>
       </section>
 
       </>}
@@ -539,7 +540,7 @@ function App() {
       </>}
       {activePage === 'settings' && verifiedUser && <section className="settings-page"><div className="page-intro"><div className="eyebrow"><Settings2 size={13} /> PREFERENCES</div><h1>Account &amp;<br /><span>settings.</span></h1><p>Manage your access and review connected services.</p></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><UsersRound size={18} /></span><div><strong>Telegram identity</strong><p>{verifiedUser ? (verifiedUser.username ? '@' + verifiedUser.username : verifiedUser.first_name) : 'Not verified in this session'}</p></div></div>{verifiedUser ? <button className="secondary-action" onClick={() => void signOut()}>Sign out</button> : <p className="settings-hint">Sign in from the Collection page using Telegram.</p>}</article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Wallet size={18} /></span><div><strong>TON wallet</strong><p>{walletAddress ? 'Connected: ' + walletAddress.slice(0, 8) + '…' + walletAddress.slice(-6) : 'No wallet connected'}</p></div></div><button className="secondary-action" onClick={() => navigateTo('wallet')}>{walletAddress ? 'View wallet' : 'Connect wallet'}</button></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><ShieldCheck size={18} /></span><div><strong>Privacy &amp; data</strong><p>Your saved username records are private to your verified Telegram account. Manual entries are not ownership proof.</p></div></div><span className="settings-status">Private</span></article><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><Link2 size={18} /></span><div><strong>About TTOGRM</strong><p>Every Telegram name. One place.</p></div></div><button className="secondary-action" onClick={() => setShowAbout(true)}>About the app</button></article></section>}
 
-      {!verifiedUser && activePage === 'settings' && <section className="guest-settings"><div className="page-intro"><div className="eyebrow"><ShieldCheck size={13} /> YOUR PRIVACY</div><h1>Your account,<br /><span>your control.</span></h1><p>Sign in with Telegram to access your personal workspace and manage account preferences. Wallet connection is optional and independent.</p><button className="primary-button guest-settings-cta" onClick={() => navigateTo('collection')}>Continue to sign in <ArrowUpRight size={16} /></button></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><LockKeyhole size={18} /></span><div><strong>Private by design</strong><p>Sign-in identifies your Telegram account. Private inventory access will only be enabled after database authorization is connected.</p></div></div></article></section>}
+      {!verifiedUser && activePage === 'settings' && <section className="guest-settings"><div className="page-intro"><div className="eyebrow"><ShieldCheck size={13} /> YOUR PRIVACY</div><h1>Your account,<br /><span>your control.</span></h1><p>Sign in with Telegram to access your personal workspace and manage account preferences. Wallet connection is optional and independent.</p><button className="primary-button guest-settings-cta" onClick={() => navigateTo('collection')}>Continue to sign in <ArrowUpRight size={16} /></button></div><article className="settings-card"><div className="settings-card-heading"><span className="settings-icon"><LockKeyhole size={18} /></span><div><strong>Private by design</strong><p>Sign-in identifies your Telegram account. Your saved usernames are only visible to you after you sign in with Telegram.</p></div></div></article></section>}
 
       <footer className="footer">
         <span><LockKeyhole size={13} /> {verifiedUser ? "Your workspace" : "Private by design"}</span>
@@ -568,7 +569,7 @@ function App() {
             <div><code>/stats</code><span>Get the current market-data status</span></div>
             <div><code>/currency</code><span>Explain Gram (GRAM) and the TON blockchain</span></div>
           </div>
-          <div className="modal-footnote"><ShieldCheck size={16} /> Commands are being wired up. Sales statistics stay unavailable until a trusted data feed is connected.</div>
+          <div className="modal-footnote"><ShieldCheck size={16} /> Sales information will appear when confirmed sale records are available.</div>
           <button className="primary-button" onClick={() => setShowBotHelp(false)}>Back to TTOGRM</button>
         </section>
       </div>}
@@ -579,7 +580,7 @@ function App() {
           <span className="modal-icon"><Link2 size={24} /></span>
           <h2 id="about-title">TTOGRM</h2>
           <p>Every Telegram name. One place. A private collection for usernames on personal profiles, groups and channels — including basic and collectible usernames.</p>
-          <div className="modal-footnote"><ShieldCheck size={16} /> Inventory discovery is not connected in this preview.</div>
+          <div className="modal-footnote"><ShieldCheck size={16} /> You can add usernames manually. Automatic discovery is not available yet, and adding a name does not confirm ownership.</div>
           <button className="primary-button" onClick={() => setShowAbout(false)}>Back to collection</button>
         </section>
       </div>}
