@@ -203,3 +203,13 @@ h1 span { color: var(--blue); }
 .wallet-detail-icon { width: 35px; height: 35px; }
 .nav-item.active { color: #70c9f6; }
 @media (max-width: 440px) { .settings-card { align-items: flex-start; flex-wrap: wrap; } .settings-status, .secondary-action { margin-left: 50px; } .page-intro h1 { font-size: 42px; } }
+
+/* Guest-facing landing and authenticated dashboard states */
+.header-signin { display: inline-flex; align-items: center; gap: 6px; padding: 10px 13px; border: 1px solid rgba(56,169,232,.3); border-radius: 12px; background: rgba(56,169,232,.12); color: #8bd6ff; font-size: 12px; font-weight: 700; }
+.public-benefits { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.public-benefits span { display: inline-flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 11px; color: #b7c7d2; background: rgba(255,255,255,.025); font-size: 11px; }
+.public-benefits svg { color: #70c9f6; }
+.auth-pending { margin: 18px 0 0; color: #9aabb8; font-size: 12px; }
+.guest-settings { padding: 8px 0 20px; }
+.guest-settings-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 4px; }
+@media (max-width: 440px) { .public-benefits { display: grid; grid-template-columns: 1fr; } .header-signin { padding: 9px 10px; } }
