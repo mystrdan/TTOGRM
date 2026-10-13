@@ -20,7 +20,7 @@ const HELP = [
   '/top — Highest reported username sale',
   '/stats — Market data coverage and status',
   '/currency — Explain Gram (GRAM) and the TON blockchain',
-  '/inventory — Explain inventory discovery and demo data',
+  '/inventory — Explain inventory status',
   '',
   'Market prices are denominated in Gram (GRAM), the native currency of the TON blockchain. Sales figures will only be shown when a trusted data source is connected. TTOGRM does not invent market numbers.',
 ].join('\n')
