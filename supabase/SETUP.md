@@ -29,7 +29,7 @@ In **Vercel → Project → Settings → Environment Variables**, configure the 
 - `TELEGRAM_WEBHOOK_SECRET`: a random secret used to validate incoming Telegram webhook requests.
 - `SUPABASE_URL`: `https://eugovevzpptsfstkjcaf.supabase.co`.
 - `SUPABASE_SECRET_KEY`: preferred current server-only Supabase secret API key (`sb_secret_...`), used by the server-side market-board and private inventory APIs. Never expose this in frontend code. `SUPABASE_SERVICE_ROLE_KEY` (legacy JWT key) remains a temporary fallback.
-- `VITE_TELEGRAM_AUTH_URL`: optional public endpoint URL for the Supabase auth function, if the frontend should call it instead of `/api/auth`.
+- `VITE_TELEGRAM_AUTH_URL`: legacy setting only; the Mini App now authenticates through same-origin `/api/auth` on Vercel, using the Vercel server-side bot token.
 - `VITE_TELEGRAM_BOT_USERNAME`: the bot username without `@`, required for Telegram Login Widget sign-in on desktop and regular browsers.
 
 For browser login, also link the production domain to your bot through BotFather `/setdomain`. The Telegram Login Widget callback is verified server-side by `POST /api/telegram-login`; it does not authorize private inventory reads by itself.
