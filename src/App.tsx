@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TonConnectButton, useTonAddress, useTonWallet } from '@tonconnect/ui-react'
 import {
   ArrowDownUp,
@@ -14,6 +14,7 @@ import {
   Link2,
   LockKeyhole,
   RadioTower,
+  RefreshCw,
   Search,
   Settings2,
   ShieldCheck,
@@ -196,19 +197,25 @@ function App() {
   const [editAssignment, setEditAssignment] = useState<'assigned' | 'unassigned' | 'unknown'>('unknown')
   const [editTitle, setEditTitle] = useState('')
 
-  useEffect(() => {
-    let active = true
-    fetch('/api/market-board', { cache: 'no-store' })
-      .then(async (response) => {
-        const data = await response.json()
-        if (!response.ok && !data) throw new Error('Sales information is not available right now.')
-        return data as MarketBoard
-      })
-      .then((data) => { if (active) setMarketBoard(data) })
-      .catch(() => { if (active) setMarketBoard(null) })
-      .finally(() => { if (active) setMarketLoading(false) })
-    return () => { active = false }
+  const refreshMarketBoard = useCallback(async () => {
+    setMarketLoading(true)
+    try {
+      const response = await fetch('/api/market-board', { cache: 'no-store' })
+      const data = await response.json()
+      if (!response.ok && !data) throw new Error('Sales information is not available right now.')
+      setMarketBoard(data as MarketBoard)
+    } catch {
+      setMarketBoard(null)
+    } finally {
+      setMarketLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void refreshMarketBoard()
+    const interval = window.setInterval(() => { void refreshMarketBoard() }, 60_000)
+    return () => window.clearInterval(interval)
+  }, [refreshMarketBoard])
 
 
   useEffect(() => {
@@ -454,7 +461,10 @@ function App() {
         </div>
         <div className="market-board-bottom">
           <div><strong>Recent sales &amp; top usernames</strong><span>{marketBoard?.available ? `${marketBoard.recentSales.length} latest confirmed sales` : 'Confirmed sales will appear here when available.'}</span></div>
-          <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Telegram bot help <ArrowUpRight size={15} /></button>
+          <div className="market-board-actions">
+            <button className="board-refresh" onClick={() => void refreshMarketBoard()} disabled={marketLoading}><RefreshCw size={14} className={marketLoading ? 'refresh-spinning' : ''} />{marketLoading ? 'Refreshing…' : 'Refresh data'}</button>
+            <button className="board-refresh" onClick={() => setShowBotHelp(true)}>Bot commands <ArrowUpRight size={15} /></button>
+          </div>
         </div>
         {marketBoard?.available && marketBoard.recentSales.length > 0 && <div className="market-sales-list">
           {marketBoard.recentSales.map((sale, index) => <div className="market-sale-row" key={`${sale.username}-${sale.sold_at}-${index}`}>
