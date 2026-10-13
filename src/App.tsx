@@ -64,7 +64,7 @@ function App() {
   const wallet = useTonWallet()
   const [authState, setAuthState] = useState<'preview' | 'checking' | 'verified' | 'failed'>('preview')
   const initData = window.Telegram?.WebApp?.initData ?? ''
-  const authEndpoint = import.meta.env.VITE_TELEGRAM_AUTH_URL || '/api/auth'
+  const authEndpoint = '/api/auth'
 
   useEffect(() => {
     const handlePopState = () => setActivePage(pageFromPath(window.location.pathname))
