@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { timingSafeEqual } from 'node:crypto'
-import { loadMarketBoard, type MarketBoard } from './_market'
+import { loadMarketBoard, type MarketBoard } from './_market.js'
 
 type TelegramMessage = {
   message_id: number
