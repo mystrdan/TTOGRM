@@ -293,3 +293,17 @@ describe('CSRF origin guard (cookie writes)', () => {
     assert.match(src, /typeof user\.photo_url === "string"/);
   });
 });
+
+
+describe('live integration defaults', () => {
+  it('uses same-origin Vercel authentication instead of an optional Supabase URL override', () => {
+    const src = read('src/App.tsx');
+    assert.match(src, /const authEndpoint = '\/api\/auth'/);
+    assert.doesNotMatch(src, /VITE_TELEGRAM_AUTH_URL/);
+  });
+  it('renders inventory command help with real line breaks', () => {
+    const src = read('api/telegram-webhook.ts');
+    assert.match(src, /TTOGRM inventory status\\n\\nThe current dashboard/);
+    assert.doesNotMatch(src, /TTOGRM inventory status\\\\n\\\\n/);
+  });
+});
