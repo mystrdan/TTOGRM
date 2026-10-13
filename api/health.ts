@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { loadMarketBoard } from './_market'
+import { loadMarketBoard } from './_market.js'
 
 /**
  * Safe operational diagnostics for the deployed app.
