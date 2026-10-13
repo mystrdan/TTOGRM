@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
-import { buildSessionValue, isSecureRequest, sessionCookieHeader } from './_telegram-auth'
+import { buildSessionValue, isSecureRequest, sessionCookieHeader } from './_telegram-auth.js'
 
 type TelegramLoginUser = {
   id: number
