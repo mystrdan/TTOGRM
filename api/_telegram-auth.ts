@@ -1,4 +1,5 @@
 import type { VercelRequest } from '@vercel/node'
+import type { TLSSocket } from 'node:tls'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export type MiniAppUser = {
@@ -161,7 +162,8 @@ function hostOf(url: string): string {
 export function isSecureRequest(req: VercelRequest): boolean {
   const forwarded = req.headers['x-forwarded-proto']
   const proto = Array.isArray(forwarded) ? forwarded[0] : forwarded
-  return (proto || '').split(',')[0].trim() === 'https' || req.socket?.encrypted === true
+  const socket = req.socket as TLSSocket | undefined
+  return (proto || '').split(',')[0].trim() === 'https' || socket?.encrypted === true
 }
 
 /** Session cookie header value; Secure is set only on HTTPS requests. */
