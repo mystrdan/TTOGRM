@@ -33,6 +33,10 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 - A GitHub Actions workflow runs the production build on pushes and pull requests.
 - Vercel project `ttogrm` is connected to this repository with `main` as its production branch. Project: https://vercel.com/capsicom/ttogrm. Recent production deployments have completed successfully; verify the latest commit's deployment status in Vercel before relying on a new change.
 
+### Live diagnostics
+
+Open `https://ttogrm-capsicom.vercel.app/api/health` to inspect integration readiness. It reports configuration booleans only and never returns secret values or private inventory. A degraded status identifies missing authentication/webhook configuration or an unavailable market RPC. A connected market board with zero verified sales means the database query works, but no verified sales are loaded for the current 24-hour window.
+
 ## Secrets and deployment
 
 **Never commit the Telegram bot token. Never put it in frontend code, a `VITE_*` variable, an issue, or a log.** Rotate any token that has been shared outside the secret manager.
