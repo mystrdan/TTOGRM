@@ -64,7 +64,7 @@ function responseFor(command: string, firstName = '', board?: MarketBoard) {
     case '/currency':
       return 'Currency: Gram (GRAM). Blockchain: TON. Market prices in TTOGRM are denominated in GRAM; TON refers to the network, not the currency ticker.'
     case '/inventory':
-      return '📚 TTOGRM inventory status\\n\\nYour collection starts empty. You can add usernames manually in the app, but a saved entry does not prove ownership. Telegram Mini App login cannot automatically list every username, group, or channel linked to your account. Automatic discovery is not available yet, and we will not claim a complete inventory without a supported, consent-based method.'
+      return '📚 TTOGRM inventory status\n\nYour collection starts empty. You can add usernames manually in the app, but a saved entry does not prove ownership. Telegram Mini App login cannot automatically list every username, group, or channel linked to your account. Automatic discovery is not available yet, and we will not claim a complete inventory without a supported, consent-based method.'
     case '/stats':
       return `TTOGRM service status\n\n• Bot command endpoint: active\n• Market data source: ${board?.available ? 'connected' : 'not connected'}\n• Verified sales in current 24h window: ${board?.available ? board.soldCount : 'unavailable'}\n\nA zero count means no verified records are loaded in the current window; it does not prove that no usernames were sold.`
     default:
