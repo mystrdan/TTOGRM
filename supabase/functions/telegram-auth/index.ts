@@ -9,7 +9,9 @@ type TelegramUser = {
 }
 
 function safeEqualHex(left: string, right: string) {
-  if (!/^[a-f0-9]+$/i.test(left) || !/^[a-f0-9]+$/i.test(right)) return false
+  // Strict 64-hex on both sides: matches api/_telegram-auth.ts and rejects
+  // odd-length or overlong digests instead of crashing on them.
+  if (!/^[a-f0-9]{64}$/i.test(left) || !/^[a-f0-9]{64}$/i.test(right)) return false
   const a = new Uint8Array(left.match(/.{2}/g)!.map((byte) => Number.parseInt(byte, 16)))
   const b = new Uint8Array(right.match(/.{2}/g)!.map((byte) => Number.parseInt(byte, 16)))
   if (a.length !== b.length) return false
@@ -31,7 +33,7 @@ async function validateInitData(raw: string, botToken: string) {
   const params = new URLSearchParams(raw)
   const receivedHash = params.get("hash")
   const authDate = Number(params.get("auth_date"))
-  if (!receivedHash || !Number.isFinite(authDate) || authDate <= 0) throw new Error("Invalid Telegram initialization data")
+  if (!receivedHash || !Number.isSafeInteger(authDate) || authDate <= 0) throw new Error("Invalid Telegram initialization data")
 
   const now = Math.floor(Date.now() / 1000)
   if (authDate > now + 30 || now - authDate > 60 * 60 * 24) throw new Error("Telegram session expired. Reopen the Mini App.")
@@ -58,12 +60,14 @@ async function validateInitData(raw: string, botToken: string) {
     throw new Error("Telegram user information is invalid")
   }
 
+  // Verified profile fields only: string-typed extras pass through, matching
+  // api/_telegram-auth.ts. Non-string values are dropped rather than echoed.
   return {
     id: user.id,
     first_name: user.first_name,
-    ...(user.last_name ? { last_name: user.last_name } : {}),
-    ...(user.username ? { username: user.username } : {}),
-    ...(user.photo_url ? { photo_url: user.photo_url } : {}),
+    ...(typeof user.last_name === "string" ? { last_name: user.last_name } : {}),
+    ...(typeof user.username === "string" ? { username: user.username } : {}),
+    ...(typeof user.photo_url === "string" ? { photo_url: user.photo_url } : {}),
   }
 }
 

@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createHmac, timingSafeEqual } from 'node:crypto'
-
-type SessionPayload = { user: { id: number; first_name: string }; exp: number }
+import { isAllowedWriteRequest, sessionUser } from './_telegram-auth'
 type InventoryInput = {
   id?: string
   username?: string
@@ -9,51 +7,6 @@ type InventoryInput = {
   username_type?: 'basic' | 'collectible'
   assignment_status?: 'assigned' | 'unassigned' | 'unknown'
   title?: string | null
-}
-
-function sessionUser(req: VercelRequest): SessionPayload['user'] | null {
-  const token = process.env.TELEGRAM_BOT_TOKEN
-  if (!token) return null
-  const initData = typeof req.headers['x-telegram-init-data'] === 'string' ? req.headers['x-telegram-init-data'] : ''
-  if (initData) {
-    const params = new URLSearchParams(initData)
-    const receivedHash = params.get('hash') || ''
-    params.delete('hash')
-    const checkString = [...params.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, value]) => `${key}=${value}`).join('\n')
-    const secret = createHmac('sha256', 'WebAppData').update(token).digest()
-    const expected = createHmac('sha256', secret).update(checkString).digest()
-    const received = /^[a-f0-9]{64}$/i.test(receivedHash) ? Buffer.from(receivedHash, 'hex') : Buffer.alloc(0)
-    const authDate = Number(params.get('auth_date'))
-    const now = Math.floor(Date.now() / 1000)
-    if (received.length === expected.length && timingSafeEqual(received, expected) && Number.isSafeInteger(authDate) && authDate <= now + 30 && now - authDate <= 86400) {
-      try {
-        const rawUser = params.get('user')
-        const miniUser = rawUser ? JSON.parse(rawUser) as { id?: number; first_name?: string } : null
-        if (miniUser && Number.isSafeInteger(miniUser.id) && (miniUser.id || 0) > 0 && typeof miniUser.first_name === 'string') return { id: miniUser.id!, first_name: miniUser.first_name }
-      } catch { /* Reject malformed Mini App user data. */ }
-    }
-    return null
-  }
-  const cookieHeader = req.headers.cookie
-  if (!cookieHeader) return null
-  const cookie = cookieHeader.split(';').map((part) => part.trim()).find((part) => part.startsWith('ttogrm_session='))
-  const value = cookie?.slice('ttogrm_session='.length)
-  if (!value) return null
-  const separator = value.lastIndexOf('.')
-  if (separator < 1) return null
-  const payload = value.slice(0, separator)
-  const signature = value.slice(separator + 1)
-  if (!/^[a-f0-9]{64}$/i.test(signature)) return null
-  const expected = createHmac('sha256', token).update(payload).digest()
-  const received = Buffer.from(signature, 'hex')
-  if (received.length !== expected.length || !timingSafeEqual(received, expected)) return null
-  try {
-    const session = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as SessionPayload
-    if (!session.user || !Number.isSafeInteger(session.user.id) || !Number.isSafeInteger(session.exp) || session.exp <= Math.floor(Date.now() / 1000)) return null
-    return session.user
-  } catch {
-    return null
-  }
 }
 
 function config() {
@@ -84,6 +37,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   const user = sessionUser(req)
   if (!user) return res.status(401).json({ error: 'Sign in with Telegram to access your private inventory.' })
+  // Reject cross-site cookie-authenticated writes; initData requests carry their
+  // own unforgeable HMAC and are exempt.
+  if ((req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') && !isAllowedWriteRequest(req)) {
+    return res.status(403).json({ error: 'This action was blocked for your protection. Please refresh and try again.' })
+  }
   const cfg = config()
   if (!cfg) return res.status(503).json({ error: 'Your collection is temporarily unavailable. Please try again later.' })
   const endpoint = `${cfg.baseUrl}/rest/v1/username_entries`
@@ -91,7 +49,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      const response = await fetch(`${endpoint}?select=id,username,entity_type,username_type,assignment_status,title,verification_status,created_at,updated_at&telegram_user_id=eq.${user.id}&order=created_at.desc`, { headers, cache: 'no-store' })
+      // Keep inventory reads bounded: validate client pagination and enforce a
+      // conservative server-side maximum so one request cannot stream the whole table.
+      const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 200)
+      const offset = Math.max(Number(req.query.offset) || 0, 0)
+      const response = await fetch(`${endpoint}?select=id,username,entity_type,username_type,assignment_status,title,verification_status,created_at,updated_at&telegram_user_id=eq.${user.id}&order=created_at.desc&limit=${limit}&offset=${offset}`, { headers, cache: 'no-store' })
       if (!response.ok) return res.status(502).json({ error: 'Could not load your inventory.' })
       return res.status(200).json({ items: await response.json() })
     }
@@ -100,6 +62,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: 'That saved username could not be found. Please refresh and try again.' })
       const response = await fetch(`${endpoint}?id=eq.${encodeURIComponent(id)}&telegram_user_id=eq.${user.id}`, { method: 'DELETE', headers })
       if (!response.ok) return res.status(502).json({ error: 'Could not remove that username.' })
+      const deleted = await response.json().catch(() => null)
+      // Supabase returns an empty array when no row matched both the id and the
+      // verified owner. Surface 404 so retries and cross-user IDs are not
+      // reported as successful deletions.
+      if (!Array.isArray(deleted) || deleted.length === 0) {
+        return res.status(404).json({ error: 'That saved username could not be found. Please refresh and try again.' })
+      }
       return res.status(200).json({ deleted: true })
     }
     const input = validInput((req.body || {}) as InventoryInput)
@@ -109,7 +78,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (req.method === 'PUT' && !/^[0-9a-f-]{36}$/i.test(editingId)) return res.status(400).json({ error: 'A valid inventory item ID is required.' })
       // Compare normalized values in code instead of using SQL LIKE patterns: underscores
       // are valid Telegram username characters but are wildcards in LIKE/ILIKE filters.
-      const duplicateUrl = `${endpoint}?select=id,username&telegram_user_id=eq.${user.id}`
+      // Bounded: the per-account unique index keeps this set small, but never
+      // stream the whole table for a duplicate check.
+      const duplicateUrl = `${endpoint}?select=id,username&telegram_user_id=eq.${user.id}&limit=500`
       const duplicateResponse = await fetch(duplicateUrl, { headers, cache: 'no-store' })
       if (!duplicateResponse.ok) return res.status(502).json({ error: 'We couldn’t check whether this username is already saved. Please try again.' })
       const duplicateRows = await duplicateResponse.json() as Array<{ id: string; username: string }>

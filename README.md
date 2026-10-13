@@ -23,7 +23,7 @@ A complete inventory may require a separate, explicit MTProto account-authorizat
 ## Current status
 
 - React + TypeScript Mini App interface is in place, with dedicated `/collection`, `/market`, `/wallet`, and `/settings` page URLs and browser back/forward navigation.
-- Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API route and Supabase Edge Function.
+- Telegram Mini App initialization data validation is implemented in two server-side options: Vercel API routes (`api/auth.ts` + shared `api/_telegram-auth.ts`, also used by `api/inventory.ts` and `api/telegram-session.ts`) and Supabase Edge Function (`supabase/functions/telegram-auth/index.ts`).
 - Both validators read `TELEGRAM_BOT_TOKEN` only from server-side environment/secrets, check the auth timestamp, validate the Telegram HMAC signature, and return a minimal verified user profile.
 - The authenticated dashboard loads private username entries from `public.username_entries` and supports manually adding, editing, removing, searching, filtering, sorting, and exporting records as CSV. Assignment status preserves assigned, unassigned, and unknown states. CSV export preserves verification status and protects user-entered notes against spreadsheet formula injection. Inventory access accepts a signed, HttpOnly browser session cookie or freshly validated Telegram Mini App `initData`, and every operation is scoped to the verified Telegram user ID. Empty collections, loading states, and errors are shown separately; no sample usernames are presented as the user's own inventory.
 - MTProto username discovery is not implemented yet. Manually entered records are not proof of ownership. TON Connect UI is wired into the app; wallet connection still needs end-to-end browser testing.
@@ -101,7 +101,11 @@ Requirements: Node.js 20+
 ```bash
 npm install
 npm run dev
+npm test
 ```
+
+`npm test` runs the dependency-free Node regression suite in `tests/regression.test.mjs`
+(pagination bounds, delete semantics, duplicate prevention, CSV export guards, auth hardening).
 
 ## Database foundation
 

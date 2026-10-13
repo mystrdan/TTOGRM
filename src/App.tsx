@@ -238,6 +238,7 @@ function App() {
   }, [verifiedUser, initData])
 
   const saveInventoryItem = async () => {
+    if (savingInventory) return
     const cleanHandle = newHandle.trim().replace(/^@/, '')
     if (!/^[A-Za-z0-9_]{5,32}$/.test(cleanHandle)) {
       setInventoryError('Enter a valid Telegram username (5–32 letters, numbers or underscores).')
@@ -281,7 +282,7 @@ function App() {
   }
 
   const saveEditedItem = async () => {
-    if (!editingId) return
+    if (!editingId || savingInventory) return
     const cleanHandle = editHandle.trim().replace(/^@/, '')
     if (!/^[A-Za-z0-9_]{5,32}$/.test(cleanHandle)) { setInventoryError('Enter a valid Telegram username (5–32 letters, numbers or underscores).'); return }
     setSavingInventory(true); setInventoryError('')
