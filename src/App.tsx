@@ -579,6 +579,7 @@ function App() {
             <div><code>/top</code><span>View the highest-value reported username sale</span></div>
             <div><code>/stats</code><span>Check whether sales information is available</span></div>
             <div><code>/currency</code><span>Explain Gram (GRAM) and the TON blockchain</span></div>
+            <div><code>/inventory</code><span>Explain your saved collection and discovery limits</span></div>
           </div>
           <div className="modal-footnote"><ShieldCheck size={16} /> Sales information will appear when confirmed sale records are available.</div>
           <button className="primary-button" onClick={() => setShowBotHelp(false)}>Back to TTOGRM</button>
