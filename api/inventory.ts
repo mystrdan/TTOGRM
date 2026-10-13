@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { isAllowedWriteRequest, sessionUser } from './_telegram-auth'
+import { isAllowedWriteRequest, sessionUser } from './_telegram-auth.js'
 type InventoryInput = {
   id?: string
   username?: string
